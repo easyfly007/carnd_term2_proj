@@ -118,8 +118,15 @@ void filter(VectorXd &x, MatrixXd &P) {
 		//YOUR CODE HERE
 		
 		// KF Measurement update step
+		VectorXd y = z - H*x;
+		VectorXd s = H*P*H.transpose() + R;
+		VectorXd k = P*H.transpose()*s.inverse();
+		x = x + k*y;
+		P = (I - k*H)*P;
 		 
 		// new state
+		x = F*x;
+		P = F*P*F.transpose() + Q;
 		
 		// KF Prediction step
 		
