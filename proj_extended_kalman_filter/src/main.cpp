@@ -38,7 +38,8 @@ int main()
   vector<VectorXd> estimations;
   vector<VectorXd> ground_truth;
 
-  h.onMessage([&fusionEKF,&tools,&estimations,&ground_truth](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  h.onMessage([&fusionEKF,&tools,&estimations,&ground_truth](uWS::WebSocket<uWS::SERVER> ws, 
+    char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -90,7 +91,7 @@ int main()
           		iss >> timestamp;
           		meas_package.timestamp_ = timestamp;
           }
-          float x_gt;
+        float x_gt;
     	  float y_gt;
     	  float vx_gt;
     	  float vy_gt;
@@ -149,7 +150,8 @@ int main()
 
   // We don't need this since we're not using HTTP but if it's removed the program
   // doesn't compile :-(
-  h.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
+  h.onHttpRequest([](uWS::HttpResponse *res, 
+    uWS::HttpRequest req, char *data, size_t, size_t) {
     const std::string s = "<h1>Hello world!</h1>";
     if (req.getUrl().valueLength == 1)
     {
