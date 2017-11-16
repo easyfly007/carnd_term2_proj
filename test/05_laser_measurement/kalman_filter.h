@@ -1,54 +1,42 @@
-#ifndef KALMAN_FILTER_H_
-#define KALMAN_FILTER_H_
+#ifndef __KALMAN_FILTER_H__
+#define __KALMAN_FILTER_H__
 #include "Dense"
 
 using Eigen::MatrixXd;
-using Eigen::VectorXd;
+using eigen::VectorXd;
 
 class KalmanFilter {
 public:
-
-	///* state vector
 	VectorXd x_;
+	// state vector
 
-	///* state covariance matrix
 	MatrixXd P_;
+	// state covariance matrix
 
-	///* state transistion matrix
 	MatrixXd F_;
+	// state transition matrix
 
-	///* process covariance matrix
 	MatrixXd Q_;
+	// process covariance matrix
 
-	///* measurement matrix
 	MatrixXd H_;
+	// measurement matrix
 
-	///* measurement covariance matrix
 	MatrixXd R_;
+	// measurement convariance matrix
 
-	/**
-	 * Constructor
-	 */
 	KalmanFilter();
+	// constructor function
 
-	/**
-	 * Destructor
-	 */
-	virtual ~KalmanFilter();
+	virtual ~KalmanFIlter();
+	// destructure function
 
-	/**
-	 * Predict Predicts the state and the state covariance
-	 * using the process model
-	 */
-	void Predict();
+	void predict();
+	// predict the state and the state covariance
+	// using the process model
 
-	/**
-	 * Updates the state and
-	 * @param z The measurement at k+1
-	 */
-	void Update(const VectorXd &z);
+	void update(const VectorXd &z);
+	// update the state and z, which is the measurement at k+1
+}
 
-};
-
-#endif /* KALMAN_FILTER_H_ */
-
+#endif
