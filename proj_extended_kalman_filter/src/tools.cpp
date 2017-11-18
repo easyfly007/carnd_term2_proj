@@ -18,24 +18,26 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
     assert(estimations.size() >0);
     assert(estimations.size() == ground_truth.size())l
 
-    int size = estimations.size()
+    int size = estimations[0].size();
 	VectorXd rmse(size);
 	for (int i = 0; i < size; i ++)
 		rmse(i) = 0.0;
 
 	//accumulate squared residuals
-	for(int i=0; i < estimations.size(); ++i){
-        for (int j = 0; j < 4; j++)
-    	    rmse(i) += estimations[i](j) - ground_truth[i](j)	
+	for(unsigned int i=0; i < estimations.size(); ++i){
+
+		VectorXd residual = estimations[i] - ground_truth[i];
+
+		//coefficient-wise multiplication
+		residual = residual.array()*residual.array();
+		rmse += residual;
 	}
-	
-	for (int j = 0; j < 4; j ++)
-	    rmse(j) = rmse(j) / size;
 
 	//calculate the mean
-	for (int j = 0; j < 4; j ++)
-	    rmse(j) = sqrt(rmse(j));
+	rmse = rmse/estimations.size();
 
+	//calculate the squared root
+	rmse = rmse.array().sqrt();
 	return rmse;
 }
 
