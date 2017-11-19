@@ -16,7 +16,7 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
 	//  * the estimation vector size should not be zero
 	//  * the estimation vector size should equal ground truth vector size
     assert(estimations.size() >0);
-    assert(estimations.size() == ground_truth.size())l
+    assert(estimations.size() == ground_truth.size());
 
     int size = estimations[0].size();
 	VectorXd rmse(size);
