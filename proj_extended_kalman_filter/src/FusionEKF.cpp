@@ -190,6 +190,9 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     // Radar updates
 
     // rebuild Hj_, based on the current state
+    Tools tool;
+    Hj_ = tool.CalculateJacobians(efk_.x_);
+    /*
     double px = ekf_.x_(0);
     double py = ekf_.x_(1);
     double vx = ekf_.x_(2);
@@ -209,6 +212,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     Hj_(2, 1) = px*(vy*px - vx*py)/ r3;
     Hj_(2, 2) = px / r1;
     Hj_(2, 3) = py / r1;
+    */
   
     ekf_.R_ = R_radar_; // size (3, 3)
     ekf_.H_ = Hj_; // size (3, 4)
