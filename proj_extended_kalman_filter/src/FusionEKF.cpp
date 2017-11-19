@@ -213,7 +213,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     ekf_.R_ = R_radar_; // size (3, 3)
     ekf_.H_ = Hj_; // size (3, 4)
 
-    UpdateEKF(measurement_pack.raw_measurements_)
+    UpdateEKF(measurement_pack.raw_measurements_);
   } else {
     // Laser updates
     // need to update H, the meas matix, and R, the measurement covariance 
