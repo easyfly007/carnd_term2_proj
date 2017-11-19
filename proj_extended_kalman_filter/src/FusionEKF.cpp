@@ -68,7 +68,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       /**
       Convert radar from polar to cartesian coordinates and initialize state.
       */
-      Eigen::VectorXd meas_polar = meas_package.raw_measurements_;
+      Eigen::VectorXd meas_polar = measurement_pack.raw_measurements_;
       double rho = meas_polar(0);
       double theta = meas_polar(1);
       double rho_dot = meas_polar(2);
@@ -164,9 +164,9 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
   // set process covariance matrix Q, based on the noise_ax, noise_ay and dt
   ekf_.Q_ = MatrixXd(4, 4);
-  dt2 = dt * dt;
-  dt3 = dt2 * dt;
-  dt4 = dt3 * dt;
+  double dt2 = dt * dt;
+  double dt3 = dt2 * dt;
+  double dt4 = dt3 * dt;
   double noise_ax = 9.0;
   double noise_ay = 9.0;
   ekf_.Q_ << dt4 /4.0 * noise_ax, dt3 * noise_ax / 2, 0, 0,
@@ -213,7 +213,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     ekf_.R_ = R_radar_; // size (3, 3)
     ekf_.H_ = Hj_; // size (3, 4)
 
-    UpdateEKF(measurement_pack.raw_measurements_);
+    ekf_.UpdateEKF(measurement_pack.raw_measurements_);
   } else {
     // Laser updates
     // need to update H, the meas matix, and R, the measurement covariance 
