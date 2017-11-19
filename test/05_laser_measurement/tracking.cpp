@@ -33,7 +33,7 @@ Tracking::Tracking()
 	kf_.F_ = MatrixXd(4, 4);
 	kf_.F_ << 1, 0, 1, 0,
 				0, 1, 0, 1,
-				0, 0, 0, 1
+				0, 0, 1, 0,
 				0, 0, 0, 1;
 	// the initial transition matrix F_
 
