@@ -191,7 +191,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
     // rebuild Hj_, based on the current state
     Tools tool;
-    Hj_ = tool.CalculateJacobians(efk_.x_);
+    Hj_ = tool.CalculateJacobian(ekf_.x_);
     /*
     double px = ekf_.x_(0);
     double py = ekf_.x_(1);
