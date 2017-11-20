@@ -81,18 +81,24 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       Eigen::VectorXd x_in = VectorXd(4);
       x_in << px, py, vx, vy;
 
-      // ekf_.x_ = x_in;
-
       Eigen::MatrixXd P_in = MatrixXd(4, 4);
       P_in << 1, 0, 0, 0,
             0, 1, 0, 0,
             0, 0, 1000, 0,
             0, 0, 0, 1000;
-      Eigen::MatrixXd F_in = MatrixXd() 
-      
-      R_in = R_radar_;
 
-      ekf_.Init(x_in, P_in, F_in, H_in, R_in, Q_in);
+      Eigen::MatrixXd F_in = MatrixXd(4, 4);
+      F_in <<  0, 0, 1, 0,
+      			0, 0, 0, 1,
+      			0, 0, 0, 0,
+      			0, 0, 0, 0;
+      Eigen::MatrixXd H_in = MatrixXd(2, 4);
+      H_in << 1, 0, 0, 0,
+      			0, 1, 0, 0;
+      
+      Eigen::MatrixXd R_in = R_radar_;
+
+      // ekf_.Init(x_in, P_in, F_in, H_in, R_in, Q_in);
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
       /**
