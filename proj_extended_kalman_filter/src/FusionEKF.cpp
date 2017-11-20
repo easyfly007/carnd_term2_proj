@@ -58,7 +58,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       * Remember: you'll need to convert radar from polar to cartesian coordinates.
     */
     // first measurement
-    // cout << "EKF: " << endl;
+    cout << "EKF: " << endl;
     // ekf_.x_ = VectorXd(4);
     // ekf_.x_ << 1, 1, 1, 1;
     
@@ -81,25 +81,25 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       Eigen::VectorXd x_in = VectorXd(4);
       x_in << px, py, vx, vy;
 
-      ekf_.x_ = x_in;
+      // ekf_.x_ = x_in;
 
-      // Eigen::MatrixXd P_in = MatrixXd(4, 4);
-      // P_in << 1,0, 0, 0, 0,
-      //       0, 1, 0, 0,
-      //       0, 0, 1000, 0,
-      //       0, 0, 0, 1000;
-      // Eigen::MatrixXd F_in = MatrixXd() 
-      // R_in = R_radar_;
+      Eigen::MatrixXd P_in = MatrixXd(4, 4);
+      P_in << 1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1000, 0,
+            0, 0, 0, 1000;
+      Eigen::MatrixXd F_in = MatrixXd() 
+      
+      R_in = R_radar_;
 
-      // ekf_.Init(x_in, P_in, F_in, H_in, R_in, Q_in);
+      ekf_.Init(x_in, P_in, F_in, H_in, R_in, Q_in);
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
       /**
       Initialize state.
       */
       Eigen::VectorXd x_in = measurement_pack.raw_measurements_;
-      ekf_.x_ = x_in;
-      /*
+      
       //state covariance matrix P
       Eigen::MatrixXd P_in = MatrixXd(4, 4);
       P_in << 1, 0, 0, 0,
@@ -132,7 +132,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
             0, 0, 0, 0;
 
       ekf_.Init(x_in, P_in, F_in, H_in, R_in, Q_in);
-      */
+      
     }
 
     // done initializing, no need to predict or update
