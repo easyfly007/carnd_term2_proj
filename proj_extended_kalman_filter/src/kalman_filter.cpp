@@ -48,9 +48,17 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
     * update the state by using Extended Kalman Filter equations
   */
   // z is polar coordinate, with size (3)
-  Update(z);
-  /*
-  VectorXd z_pred = H_ * x_; 
+
+  // please note for y, we will still use h(x_), rather than H_ * x_
+  double px = x_(0);
+  double py = x_(1);
+  double vx = x_(2);
+  double vy = x_(3);
+  VectorXd z_pred = VectorXd(3);
+  z_pred(0) = sqrt(px^2 + py^2);
+  z_pred(1) = arctan(py/px);
+  z_pred(2) = (px * vx + py * vy) / sqrt( px^2 + py^2);
+  
   VectorXd y = z - z_pred;
 
   MatrixXd Ht = H_.transpose();
@@ -64,5 +72,4 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   long x_size = x_.size();
   MatrixXd I = MatrixXd::Identity(x_size, x_size);
   P_ = (I - K * H_) * P_;
-  */
 }
