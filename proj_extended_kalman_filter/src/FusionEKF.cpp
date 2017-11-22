@@ -59,7 +59,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       * Remember: you'll need to convert radar from polar to cartesian coordinates.
     */
     // first measurement
-    cout << "EKF inintialization: " << endl;
+    cout << "EKF inintialization begin " << endl;
     // ekf_.x_ = VectorXd(4);
     // ekf_.x_ << 1, 1, 1, 1;
     
@@ -88,18 +88,25 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
             0, 0, 1000, 0,
             0, 0, 0, 1000;
 
+      // F_in is the state transition matrix, for prediction
       Eigen::MatrixXd F_in = MatrixXd(4, 4);
-      F_in <<  0, 0, 1, 0,
-      			0, 0, 0, 1,
-      			0, 0, 0, 0,
-      			0, 0, 0, 0;
+      F_in <<  1, 0, 1, 0,
+      			   0, 1, 0, 1,
+      			   0, 0, 1, 0,
+      			   0, 0, 0, 1;
+
       Eigen::MatrixXd H_in = MatrixXd(2, 4);
       H_in << 1, 0, 0, 0,
-      			0, 1, 0, 0;
+      			  0, 1, 0, 0;
       
       Eigen::MatrixXd R_in = R_radar_;
+      Eigen::MatrixXd Q_in = MatrixXd(4, 4);
+      Q_in << 0, 0, 0, 0,
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            0, 0, 0, 0;
 
-      // ekf_.Init(x_in, P_in, F_in, H_in, R_in, Q_in);
+      ekf_.Init(x_in, P_in, F_in, H_in, R_in, Q_in);
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
       /**
