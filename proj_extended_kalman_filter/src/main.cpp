@@ -10,6 +10,8 @@ using namespace std;
 // for convenience
 using json = nlohmann::json;
 
+bool debug = true;
+
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
 // else the empty string "" will be returned.
@@ -57,6 +59,8 @@ int main()
         
         if (event == "telemetry") {
           // j[1] is the data JSON object
+          if (debug)
+            cout << " onMessage begin" << endl;
           
           string sensor_measurment = j[1]["sensor_measurement"];
           
@@ -68,6 +72,8 @@ int main()
           iss >> sensor_type;
 
           if (sensor_type.compare("L") == 0) {
+            if (debug)
+              cout << " measurement is laser" << endl;
             // for laser measurement data
             meas_package.sensor_type_ = MeasurementPackage::LASER;
             meas_package.raw_measurements_ = VectorXd(2);
@@ -79,6 +85,8 @@ int main()
             iss >> timestamp;
         		meas_package.timestamp_ = timestamp;
           } else if (sensor_type.compare("R") == 0) {
+            if (debug)
+              cout << " measurement is radar" << endl;
             meas_package.sensor_type_ = MeasurementPackage::RADAR;
         		meas_package.raw_measurements_ = VectorXd(3);
         		float ro;
@@ -108,7 +116,9 @@ int main()
       	  ground_truth.push_back(gt_values);
           
           //Call ProcessMeasurment(meas_package) for Kalman filter
-      	  fusionEKF.ProcessMeasurement(meas_package);    	  
+          cout << " begin to ProcessMeasurement" << endl;
+      	  fusionEKF.ProcessMeasurement(meas_package);
+          cout << " end ProcessMeasurement" << endl;	  
 
       	  //Push the current estimated x,y positon from the Kalman filter's state vector
 
@@ -118,15 +128,19 @@ int main()
       	  double p_y = fusionEKF.ekf_.x_(1);
       	  double v1  = fusionEKF.ekf_.x_(2);
       	  double v2 = fusionEKF.ekf_.x_(3);
-
+        
       	  estimate(0) = p_x;
       	  estimate(1) = p_y;
       	  estimate(2) = v1;
       	  estimate(3) = v2;
       	  
       	  estimations.push_back(estimate);
+          if (debug)
+            cout << " begin to CalculateRMSE" << endl;
 
       	  VectorXd RMSE = tools.CalculateRMSE(estimations, ground_truth);
+          if (debug)
+            cout << " end CalculateRMSE" << endl;
 
           json msgJson;
           msgJson["estimate_x"] = p_x;
@@ -137,7 +151,11 @@ int main()
           msgJson["rmse_vy"] = RMSE(3);
           auto msg = "42[\"estimate_marker\"," + msgJson.dump() + "]";
           // std::cout << msg << std::endl;
+          if (debug)
+            cout << " begin send" << endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+          if (debug)
+            cout << "end send " << endl;
 	  
         }
       } else {
