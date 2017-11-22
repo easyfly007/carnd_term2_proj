@@ -1,5 +1,9 @@
 #include "kalman_filter.h"
 #include <iostream>
+#include <math.h>
+
+// for pi value visit, M_PI
+#define _USE_MATH_DEFINES
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -74,6 +78,12 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   z_pred(2) = (px * vx + py * vy) / sqrt( px*px + py*py);
   
   VectorXd y = z - z_pred;
+  // normalize the theta, which is y(1)
+  double d_theta = y(2);
+  while (d_theta > M_PI)
+    d_theta -= 2*M_PI;
+  while (d_theta < -M_PI)
+    d_theta += 2*M_PI;
 
   MatrixXd Ht = H_.transpose();
   MatrixXd S = H_ * P_ * Ht + R_;
