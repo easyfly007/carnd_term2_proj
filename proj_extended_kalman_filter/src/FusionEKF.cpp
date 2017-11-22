@@ -224,27 +224,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     Hj_ = tool.CalculateJacobian(ekf_.x_);
     if (debug)
       cout << " end CalculateJacobian" << endl;
-    /*
-    double px = ekf_.x_(0);
-    double py = ekf_.x_(1);
-    double vx = ekf_.x_(2);
-    double vy = ekf_.x_(3);
-    double r1 = sqrt(px*px + py*py);
-    double r2 = r1 * r1;
-    double r3 = r1 * r2;
-    Hj_(0, 0) = px / r1;
-    Hj_(0, 1) = py / r1;
-    Hj_(0, 2) = 0.0;
-    Hj_(0, 3) = 0.0;
-    Hj_(1, 0) = - py / r2;
-    Hj_(1, 1) = - px / r2;
-    Hj_(1, 2) = - 0.0;
-    Hj_(1, 3) = - 0.0;
-    Hj_(2, 0) = py*(vx*py - vy*px)/ r3;
-    Hj_(2, 1) = px*(vy*px - vx*py)/ r3;
-    Hj_(2, 2) = px / r1;
-    Hj_(2, 3) = py / r1;
-    */
   
     ekf_.R_ = R_radar_; // size (3, 3)
     ekf_.H_ = Hj_; // size (3, 4)
