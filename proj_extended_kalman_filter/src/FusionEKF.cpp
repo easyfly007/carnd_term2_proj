@@ -105,7 +105,12 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       /**
       Initialize state.
       */
-      Eigen::VectorXd x_in = measurement_pack.raw_measurements_;
+      Eigen::VectorXd x_in = Eigen::VectorXd(4);
+      double px = measurement_pack.raw_measurements_[0];
+      double py = measurement_pack.raw_measurements_[1];
+      double vx = 0.0;
+      double vy = 0.0;
+      x_in << px, py, vx, vy;
       
       //state covariance matrix P
       Eigen::MatrixXd P_in = MatrixXd(4, 4);
@@ -144,6 +149,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
     // done initializing, no need to predict or update
     is_initialized_ = true;
+    if (debug)
+      cout << "EKF initialization end" << endl;
   }
 
   /*****************************************************************************
@@ -159,6 +166,9 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    */
   float dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;
   previous_timestamp_ = measurement_pack.timestamp_;
+  
+  if (debug)
+    cout << " calc dt =" << dt << endl;
 
   // modify the F matrix to consider time step
   ekf_.F_ << 1, 0, dt, 0,
@@ -179,8 +189,11 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     0, dt4 / 4.0 * noise_ay, 0, dt3 * noise_ay / 2.0,
     dt3 * noise_ax / 2, 0, dt2 * noise_ax, 0,
     0, dt3 * noise_ay/ 2, 0, dt2 * noise_ay;
-
+  if (debug)
+    cout << " begin predict" << endl; 
   ekf_.Predict();
+  if (debug)
+    cout << " end predict" << endl;
 
   /*****************************************************************************
    *  Update
@@ -196,8 +209,14 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     // Radar updates
 
     // rebuild Hj_, based on the current state
+    if (debug)
+      cout << "begin  radar update" << endl;
     Tools tool;
+    if (debug)
+      cout << " begin CalculateJacobian" << endl;
     Hj_ = tool.CalculateJacobian(ekf_.x_);
+    if (debug)
+      cout << " end CalculateJacobian" << endl;
     /*
     double px = ekf_.x_(0);
     double py = ekf_.x_(1);
@@ -222,15 +241,24 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   
     ekf_.R_ = R_radar_; // size (3, 3)
     ekf_.H_ = Hj_; // size (3, 4)
-
+    if (debug)
+      cout << " begin UpdateEKF" << endl;
     ekf_.UpdateEKF(measurement_pack.raw_measurements_);
+    if (debug)
+      cout << " end UpdateEKF" << endl;
   } else {
     // Laser updates
     // need to update H, the meas matix, and R, the measurement covariance 
+    if (debug)
+      cout << " begin laser update" << endl;
     ekf_.H_ = H_laser_;
     ekf_.R_ = R_laser_;
 
+    if (debug)
+      cout << " begin laser update" << endl;
     ekf_.Update(measurement_pack.raw_measurements_);
+    if (debug)
+      cout << "end laser update" << endl;
   }
 
   // print the output

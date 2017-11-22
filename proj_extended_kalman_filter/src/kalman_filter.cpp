@@ -1,12 +1,18 @@
 #include "kalman_filter.h"
+#include <iostream>
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
+using namespace std;
+
+extern bool debug;
 
 // Please note that the Eigen library does not initialize 
 // VectorXd or MatrixXd objects with zeros upon creation.
 
-KalmanFilter::KalmanFilter() {}
+KalmanFilter::KalmanFilter() {
+  x_ = Eigen::VectorXd(4);
+}
 
 KalmanFilter::~KalmanFilter() {}
 
@@ -21,9 +27,17 @@ void KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in, MatrixXd &F_in,
 }
 
 void KalmanFilter::Predict() {
+  if (debug)
+    cout << "KalmanFilter::Predict() begin" << endl;
   x_ = F_ * x_;
+  if (debug)
+    cout << " step 1" << endl;
   MatrixXd Ft = F_.transpose();
+  if (debug)
+    cout << " step 2" << endl;
   P_ = F_ * P_ * Ft + Q_;
+  if (debug)
+    cout << "KalmanFilter::Predict() end" << endl;
 }
 
 void KalmanFilter::Update(const VectorXd &z) {
