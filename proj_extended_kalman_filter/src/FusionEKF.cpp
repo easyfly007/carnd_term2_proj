@@ -1,3 +1,4 @@
+
 #include "FusionEKF.h"
 #include "tools.h"
 #include "Eigen/Dense"
@@ -60,8 +61,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     */
     // first measurement
     cout << "EKF inintialization begin " << endl;
-    // ekf_.x_ = VectorXd(4);
-    // ekf_.x_ << 1, 1, 1, 1;
+    ekf_.x_ = VectorXd(4);
+    ekf_.x_ << 1, 1, 1, 1;
     
     previous_timestamp_ = measurement_pack.timestamp_;
 
