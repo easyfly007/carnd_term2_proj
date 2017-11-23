@@ -69,17 +69,15 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   double vy = x_(3);
   VectorXd z_pred = VectorXd(3);
   z_pred(0) = sqrt(px*px + py*py);
-  z_pred(1) = atan(py/px);
+  z_pred(1) = atan2(py, px);
   z_pred(2) = (px * vx + py * vy) / sqrt( px*px + py*py);
   
   VectorXd y = z - z_pred;
   // normalize the theta, which is y(1)
-  double d_theta = y(2);
-  while (d_theta > M_PI)
-    d_theta -= 2*M_PI;
-  while (d_theta < -M_PI)
-    d_theta += 2*M_PI;
-  y(2) = d_theta;
+  if ( y(1) > M_PI)
+    y(1) -= 2*M_PI;
+  else if (y(1) < -M_PI)
+    y(1) += 2*M_PI;
 
   MatrixXd Ht = H_.transpose();
   MatrixXd S = H_ * P_ * Ht + R_;
@@ -89,11 +87,8 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
 
   //new estimate
   x_ = x_ + (K * y);
-  while (x_(1) > M_PI)
-    x_(1) -= 2*M_PI;
-  while (x_(1) < M_PI)
-    x_(1) += 2*M_PI;
   long x_size = x_.size();
   MatrixXd I = MatrixXd::Identity(x_size, x_size);
   P_ = (I - K * H_) * P_;
+  cout << P_.size()<< endl;
 }
