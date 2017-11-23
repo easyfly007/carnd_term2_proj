@@ -33,15 +33,10 @@ void KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in, MatrixXd &F_in,
 void KalmanFilter::Predict() {
   if (debug)
     cout << "KalmanFilter::Predict() begin" << endl;
+
   x_ = F_ * x_;
-  if (debug)
-    cout << " step 1" << endl;
   MatrixXd Ft = F_.transpose();
-  if (debug)
-    cout << " step 2" << endl;
   P_ = F_ * P_ * Ft + Q_;
-  if (debug)
-    cout << "KalmanFilter::Predict() end" << endl;
 }
 
 void KalmanFilter::Update(const VectorXd &z) {
@@ -84,6 +79,7 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
     d_theta -= 2*M_PI;
   while (d_theta < -M_PI)
     d_theta += 2*M_PI;
+  y(2) = d_theta;
 
   MatrixXd Ht = H_.transpose();
   MatrixXd S = H_ * P_ * Ht + R_;
@@ -93,6 +89,10 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
 
   //new estimate
   x_ = x_ + (K * y);
+  while (x_(1) > M_PI)
+    x_(1) -= 2*M_PI;
+  while (x_(1) < M_PI)
+    x_(1) += 2*M_PI;
   long x_size = x_.size();
   MatrixXd I = MatrixXd::Identity(x_size, x_size);
   P_ = (I - K * H_) * P_;

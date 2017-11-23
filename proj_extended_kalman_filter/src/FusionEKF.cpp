@@ -89,23 +89,28 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
             0, 0, 1000, 0,
             0, 0, 0, 1000;
 
+
       // F_in is the state transition matrix, for prediction
       Eigen::MatrixXd F_in = MatrixXd(4, 4);
       F_in <<  1, 0, 1, 0,
       			   0, 1, 0, 1,
       			   0, 0, 1, 0,
       			   0, 0, 0, 1;
-
-      Eigen::MatrixXd H_in = MatrixXd(2, 4);
-      H_in << 1, 0, 0, 0,
-      			  0, 1, 0, 0;
       
-      Eigen::MatrixXd R_in = R_radar_;
       Eigen::MatrixXd Q_in = MatrixXd(4, 4);
       Q_in << 0, 0, 0, 0,
             0, 0, 0, 0,
             0, 0, 0, 0,
             0, 0, 0, 0;
+
+      // for radar measurement, H_ should be replaced by Hj
+      Eigen::MatrixXd H_in = MatrixXd(2, 4);
+      H_in << 1, 0, 0, 0,
+      			  0, 1, 0, 0;
+      H_in = Hj_;
+      
+      Eigen::MatrixXd R_in = R_radar_;
+
 
       ekf_.Init(x_in, P_in, F_in, H_in, R_in, Q_in);
     }
@@ -133,6 +138,16 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
         0, 1, 0, 1,
         0, 0, 1, 0,
         0, 0, 0, 1;
+      
+      // predict covariance
+      // note that predict covariance depends on the dt, in the initial step
+      // we juest set all to 0
+      Eigen::MatrixXd Q_in = MatrixXd(4, 4);
+      Q_in << 0, 0, 0, 0,
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+            0, 0, 0, 0;
+
 
       // measurement transforming matrix H
       Eigen::MatrixXd H_in = MatrixXd(2, 4);
@@ -142,14 +157,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       // measurement noise covarience
       Eigen::MatrixXd R_in = R_laser_;
 
-      // predict covariance
-      // note that predict covariance depends on the dt, in the initial step
-      // we juest set all to 0
-      Eigen::MatrixXd Q_in = MatrixXd(4, 4);
-      Q_in << 0, 0, 0, 0,
-            0, 0, 0, 0,
-            0, 0, 0, 0,
-            0, 0, 0, 0;
+
 
       ekf_.Init(x_in, P_in, F_in, H_in, R_in, Q_in);
       
@@ -199,7 +207,10 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     0, dt3 * noise_ay/ 2, 0, dt2 * noise_ay;
   if (debug)
     cout << " begin predict" << endl; 
+  
+  // always use a linear prediction, so no need to separate with Liser and Radar
   ekf_.Predict();
+
   if (debug)
     cout << " end predict" << endl;
 
