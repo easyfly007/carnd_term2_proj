@@ -46,22 +46,35 @@ void UKF::SigmaPointPrediction(MatrixXd* Xsig_out) {
 /*******************************************************************************
  * Student part begin
  ******************************************************************************/
-  for (int i = 0; i < 2 * n_aug +1 ; i ++)
+    for (int i = 0; i < 15; i ++)
   {
-    double px = Xsig_aug(0, i);
-    double py = Xsig_aug(1, i);
-    double v = Xsig_aug(2, i);
-    double yaw = Xsig_aug(3, i);
-    double yawd = Xsig_aug(4, i)
-    double mu_a = Xsig_aug(5, 6);
-    double mu_yaw = Xsig_aug(6, 7);
-    Xsig_pred(0, i) = Xsig_aug(0, i) + v * cos(yaw) * delta_t + 1/2.0 * dt2 * cos(yaw) * mu_a;
-    Xsig_pred(1, i) = Xsig_aug(1, i) + v * sin(yaw) * delta_t + 1/2.0 * dt2 * sin(yaw) * mu_a;
-    Xsig_pred(2, i) = Xsig_aug(2, i) + 0 + delta_t* mu_a;
-    Xsig_pred(3, i) = Xsig_aug(3, i) + yawd * delta_t + 1 /2.0 * delta_t * mu_yaw;
-    Xsig_pred(4, i) = Xsig_aug(4, i) + delta_t * mu_yaw;  
-  }
+      VectorXd onePoint = VectorXd(5);
+      double px   = Xsig_aug(0, i);
+      double py   = Xsig_aug(1, i);
+      double v    = Xsig_aug(2, i);
+      double yaw  = Xsig_aug(3, i);
+      double yawd = Xsig_aug(4, i);
+      double va   = Xsig_aug(5, i);
+      double yawdd= Xsig_aug(6, i);
+      if (abs(yawd) > 1.0e-10)
+      {
+          Xsig_pred(0, i) = px + v / yawd * (sin(yaw + yawd * delta_t) - sin(yaw)) + 1/2 * cos(yaw) * va * delta_t * delta_t;
+          Xsig_pred(1, i) = py + v / yawd * (- cos(yaw + yawd*delta_t) + cos(yaw)) + 1/2 * sin(yaw) * va * delta_t * delta_t;
+          Xsig_pred(2, i) = v + 0 + va * delta_t;
+          Xsig_pred(3, i) = yaw + yawd * delta_t + 1/2 * yawdd * delta_t * delta_t;
+          Xsig_pred(4, i) = yawd + 0 + yawdd * delta_t;
+      }
+      else
+      {
+          Xsig_pred(0, i) = px + v * cos(yaw) * delta_t + 1 /2 * delta_t * delta_t * cos(yaw) * va;
+          Xsig_pred(1, i) = py + v * sin(yaw) * delta_t + 1 /2 * delta_t * delta_t * sin(yaw) * va;
+          Xsig_pred(2, i) = v + 0 + delta_t * va;
+          Xsig_pred(3, i) = yaw + yawd * delta_t + 1/2 * delta_t * delta_t * yawdd;
+          Xsig_pred(4, i) = yawd + 0 + delta_t * yawdd;
+      }
+      
 
+   
   //predict sigma points
   //avoid division by zero
   //write predicted sigma points into right column
