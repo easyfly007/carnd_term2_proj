@@ -73,9 +73,33 @@ void UKF::PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out) {
  ******************************************************************************/
 
   //transform sigma points into measurement space
-  //calculate mean predicted measurement
-  //calculate measurement covariance matrix S
+   for (int i = 0; i < 1; i ++ )
+  {
+    double px   = Xsig_pred(0, i);
+    double py   = Xsig_pred(1, i);
+    double v    = Xsig_pred(2, i);
+    double yaw  = Xsig_pred(3, i);
+    double yawd = Xsig_pred(4, i);
+    Zsig(0, i) = sqrt(px * px + py * py);
+    Zsig(1, i) = atan2(py, px);
+    Zsig(2, i) = (px * cos(yaw) * v + py * sin(yaw) * v ) / sqrt( px * px + py * py);
+  }
 
+  //calculate mean predicted measurement
+  for (int i = 0; i < 2* n_aug + 1; i ++)
+  {
+    z_pred += weight(i) * Zsig.col(i);
+  }
+
+  //calculate measurement covariance matrix S
+  MatrixXd diff = Zsig - z_pred;
+  for (int i = 0; i < 2 * n_aug +1; i ++)
+  {
+    S += weight(i) * diff * diff.transpose();
+  }
+  S(0, 0) += std_radr * std_radr;
+  S(1, 1) += std_radphi * std_radphi;
+  S(2, 2) += std_radrd * std_radrd;
   
 /*******************************************************************************
  * Student part end
