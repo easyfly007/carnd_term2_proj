@@ -88,14 +88,16 @@ void UKF::PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out) {
   //calculate mean predicted measurement
   for (int i = 0; i < 2* n_aug + 1; i ++)
   {
-    z_pred += weight(i) * Zsig.col(i);
+    z_pred += weights(i) * Zsig.col(i);
   }
 
   //calculate measurement covariance matrix S
   MatrixXd diff = Zsig - z_pred;
+  // pay attention to yaw diff
+  
   for (int i = 0; i < 2 * n_aug +1; i ++)
   {
-    S += weight(i) * diff * diff.transpose();
+    S += weights(i) * diff * diff.transpose();
   }
   S(0, 0) += std_radr * std_radr;
   S(1, 1) += std_radphi * std_radphi;
