@@ -1,0 +1,4 @@
+https://www.seas.harvard.edu/courses/cs281/papers/unscented.pdf
+http://www.ilectureonline.com/lectures/subject/SPECIAL%20TOPICS/26/190
+http://www.bzarg.com/p/how-a-kalman-filter-works-in-pictures/
+
