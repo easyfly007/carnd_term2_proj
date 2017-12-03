@@ -1,6 +1,6 @@
 #include <iostream>
-#include "Dense"
 #include <vector>
+#include "Dense"
 #include "ukf.h"
 
 using namespace std;
@@ -8,17 +8,10 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using std::vector;
 
-int main() {
-
-	//Create a UKF instance
+int main()
+{
 	UKF ukf;
-
-/*******************************************************************************
-* Programming assignment calls
-*******************************************************************************/
-
-    MatrixXd Xsig_aug = MatrixXd(7, 15);
-    ukf.AugmentedSigmaPoints(&Xsig_aug);
-
+	MatrixXd Xsig_aug = MatrixXd(7, 15);
+	ukf.augmentedSigmaPoints(&Xsig_aug);
 	return 0;
 }
