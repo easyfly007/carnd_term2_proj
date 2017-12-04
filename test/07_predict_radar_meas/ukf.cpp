@@ -68,7 +68,12 @@ void UKF::predictRadarMeasurement(VectorXd *z_out, MatrixXd *S_out)
   S.fill(0.0);
   for (int i = 0; i < 2 * n_aug + 1; i ++)
   {
-    S += weights(i) * (Zsig.col(i) -z_pred) * (Zsig.col(i) - z_pred).transpose()
+    VectorXd z_diff = Zsig.col(i) - z_pred;
+    if (z_diff(1) > M_PI)
+      z_diff(1) -= 2 * M_PI;
+    if (z_diff(1) < -M_PI)
+      z_diff(1) += 2 * M_PI;
+    S += weights(i) * z_diff* z_diff.transpose();
   }
   MatrixXd R = MatrixXd(3, 3);
   R.fill(0.0);
