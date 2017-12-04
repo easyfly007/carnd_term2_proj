@@ -1,25 +1,17 @@
 #include <iostream>
-#include "Dense"
 #include <vector>
+#include "Dense"
 #include "ukf.h"
 
 using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
-using std::vector;
 
-int main() {
-
-	//Create a UKF instance
+int main()
+{
 	UKF ukf;
-
-/*******************************************************************************
-* Programming assignment calls
-*******************************************************************************/
-    
-    VectorXd x_pred = VectorXd(5);
-    MatrixXd P_pred = MatrixXd(5, 5);
-    ukf.PredictMeanAndCovariance(&x_pred, &P_pred);
-
+	VectorXd x_pred = VectorXd(5);
+	MatrixXd P_pred = MatrixXd(5, 5);
+	ukf.predictMeanAndCovariance(&x_pred, &P_pred);
 	return 0;
 }
