@@ -63,12 +63,35 @@ UKF::~UKF() {}
  * either radar or laser.
  */
 void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
-  /**
-  TODO:
 
-  Complete this function! Make sure you switch between lidar and radar
-  measurements.
-  */
+   // initialization
+  if (!is_initialized_) {
+    is_initialized_ = true;
+    time_us_ = measurement_pack.timestamp_;
+  
+    if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
+      ;
+    }
+    else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
+      ;
+    }
+  }
+
+  float dt = (measurement_pack.timestamp_ - time_us_) / 1000000.0;
+  time_us_ = measurement_pack.timestamp_;
+  
+  // prediction
+  Predict(dt);
+
+  // update
+  if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR)
+  {
+    UpdateRadar(measurement_pack);
+  }
+  else
+  {
+    UpdateLidar(measurement_pack);
+  }
 }
 
 /**
