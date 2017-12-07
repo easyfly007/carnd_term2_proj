@@ -10,7 +10,7 @@
 //TODO: assign a value, the difference in distances between x_t and x_{t-1}
 //that maximizes the returned probability of norm_pdf
 
-float value = ?;//YOUR VALUE HERE
+float value = 1.0;//YOUR VALUE HERE
 
 
 float parameter = 1.0; //set as control parameter or observation measurement
