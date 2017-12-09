@@ -257,6 +257,9 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   MatrixXd Zsig = MatrixXd(n_z, 2 * n_aug_ + 1);
   VectorXd z_pred = VectorXd(n_z);
   VectorXd z = VectorXd(n_z);
+
+  // z is the measurement result
+  // z_pred is the predicted result based on x_
   z(0) = meas_package.raw_measurements_[0];
   z(1) = meas_package.raw_measurements_[1];
 
@@ -296,8 +299,10 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   for (int i = 0; i < 2 * n_aug_ + 1; i ++)
   {
     VectorXd xdiff = Xsig_pred_.col(i) - x_;
-    if (xdiff(1) > M_PI) xdiff(1) -= 2*M_PI;
-    if (xdiff(1) < - M_PI) xdiff(1) += 2*M_PI;
+    while (xdiff(3) > M_PI) 
+      xdiff(3) -= 2*M_PI;
+    while (xdiff(3) < - M_PI) 
+      xdiff(3) += 2*M_PI;
     
     VectorXd zdiff = z - Zsig.col(i);
     Tc += weights_(i) * xdiff *zdiff.transpose();
@@ -374,9 +379,9 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   for (int i = 0; i < 2 * n_aug_ + 1; i ++)
   {
     VectorXd z_diff = Zsig.col(i) - z_pred;
-    if (z_diff(1) > M_PI)
+    while (z_diff(1) > M_PI)
       z_diff(1) -= 2 * M_PI;
-    if (z_diff(1) < -M_PI)
+    while (z_diff(1) < -M_PI)
       z_diff(1) += 2 * M_PI;
     S += weights_(i) * z_diff* z_diff.transpose();
   }
@@ -394,21 +399,28 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   for (int i = 0; i < 2 * n_aug_ + 1; i ++)
   {
     VectorXd xdiff = Xsig_pred_.col(i) - x_;
-    if (xdiff(1) > M_PI) xdiff(1) -= 2*M_PI;
-    if (xdiff(1) < - M_PI) xdiff(1) += 2*M_PI;
+    while (xdiff(3) > M_PI)
+      xdiff(3) -= 2*M_PI;
+    while (xdiff(3) < - M_PI)
+      xdiff(3) += 2*M_PI;
     
     VectorXd zdiff = z - Zsig.col(i);
-    if (zdiff(1) > M_PI) zdiff(1) -= 2 *M_PI;
-    if (zdiff(1) < M_PI) zdiff(1) += 2 *M_PI;
+    while (zdiff(1) > M_PI)
+      zdiff(1) -= 2 *M_PI;
+    while (zdiff(1) < M_PI)
+      zdiff(1) += 2 *M_PI;
     Tc += weights_(i) * xdiff *zdiff.transpose();
   }
 
   // 4. calculate kalman gain
   MatrixXd K = Tc * S.inverse();
-  VectorXd diff = z - z_pred;
-  if (diff(1) > M_PI) diff(1) -= 2 *M_PI;
-  if (diff(1) < - M_PI) diff(1) += 2 * M_PI;
-  x_ = x_ + K * diff;
+  VectorXd z_diff = z - z_pred;
+  while (diff(1) > M_PI) 
+    z_diff(1) -= 2 *M_PI;
+  while (diff(1) < - M_PI)
+    z_diff(1) += 2 * M_PI;
+  
+  x_ = x_ + K * z_diff;
 
   P_ = P_ - K * S * K.transpose();
   double nis = (z - z_pred).transpose() * S.inverse() * (z - z_pred);
