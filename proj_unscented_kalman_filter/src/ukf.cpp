@@ -157,7 +157,7 @@ void UKF::Prediction(double delta_t) {
   P_aug(n_x_, n_x_) = std_a_ * std_a_;
   P_aug(n_x_ + 1, n_x_ + 1) = std_yawdd_ * std_yawdd_;
 
-  MatrixXd L = P_aug.llt.matrixL();
+  MatrixXd L = P_aug.llt().matrixL();
   Xsig_aug.col(0) = x_aug;
   for (int i = 0; i < n_aug_; i ++)
   {
