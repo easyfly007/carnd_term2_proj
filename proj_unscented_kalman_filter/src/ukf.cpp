@@ -193,7 +193,7 @@ void UKF::Prediction(double delta_t) {
     }
     else
     {
-      Xsig_pred_(0, i) = Xsig_aug(0, i) + v/yawd *(sin(yaw + delta_t * yawd) - sin(yaw))
+      Xsig_pred_(0, i) = Xsig_aug(0, i) + v/ yawd *(sin(yaw + delta_t * yawd) - sin(yaw))
         + 0.5 * cos(yaw) * va * delta_t * delta_t;
       Xsig_pred_(1, i) = Xsig_aug(1, i) + v / yawd * (-cos(yaw+ delta_t * yawd) + cos(yaw))
         + 0.5 * sin(yaw) * va * delta_t * delta_t;
@@ -220,6 +220,11 @@ void UKF::Prediction(double delta_t) {
   P_.fill(0.0);
   for (int i = 0; i < 2 * n_aug_ + 1; i ++)
   {
+    VectorXd diff = Xsig_pred_.col(i) - x_;
+    while (diff(3) > M_PI)
+      diff(3) -= 2 * M_PI;
+    while (diff(3) < - M_PI)
+      diff(3) += 2 * M_PI;
     P_ += weights_(i) * (Xsig_pred_.col(i) - x_) * (Xsig_pred_.col(i) - x_).transpose(); 
   }
 
