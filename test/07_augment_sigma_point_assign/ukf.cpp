@@ -45,7 +45,7 @@ void UKF::augmentedSigmaPoints(MatrixXd *Xsig_out)
   P_aug(n_x, n_x) = std_a * std_a;
   P_aug(n_x + 1, n_x + 1) = std_yawdd * std_yawdd;
 
-  MatrixXd offset = sqrt(lambda + n_aug) * (P_aug.llt.matrixL());
+  MatrixXd offset = sqrt(lambda + n_aug) * (P_aug.llt().matrixL());
 
   Xsig_aug.col(0) = x_aug;
   for (int i = 0; i < n_aug; i ++)
