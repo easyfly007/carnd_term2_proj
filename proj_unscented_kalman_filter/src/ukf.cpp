@@ -415,9 +415,9 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   // 4. calculate kalman gain
   MatrixXd K = Tc * S.inverse();
   VectorXd z_diff = z - z_pred;
-  while (diff(1) > M_PI) 
+  while (z_diff(1) > M_PI) 
     z_diff(1) -= 2 *M_PI;
-  while (diff(1) < - M_PI)
+  while (z_diff(1) < - M_PI)
     z_diff(1) += 2 * M_PI;
   
   x_ = x_ + K * z_diff;
