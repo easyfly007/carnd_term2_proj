@@ -227,6 +227,64 @@ void UKF::Prediction(double delta_t) {
  * @param {MeasurementPackage} meas_package
  */
 void UKF::UpdateLidar(MeasurementPackage meas_package) {
+  int n_z = 2;
+  MatrixXd Zsig = MatrixXd(n_z, 2 * n_aug_ + 1);
+  VectorXd z_pred = VectorXd(n_z);
+  VectorXd z = VectorXd(n_z);
+  z(0) = meas_package.raw_measurements_[0];
+  z(1) = meas_package.raw_measurements_[1];
+
+  Zsig.fill(0.0);
+  for (int i = 0; i <2 * n_aug_ + 1; i ++)
+  {
+    double px = Xsig_pred_(0, i);
+    double py = Xsig_pred_(1, i);
+    Zsig(0, i) = px;
+    Zsig(1, i) = py;
+  }
+
+  z_pred.fill(0.0);
+  for (int i = 0; i < 2 * n_aug_ + 1; i ++)
+  {
+    z_pred += weights_(i) * Zsig.col(i);
+  }
+
+  // 2. calculate the covariance matrix
+  MatrixXd S = MatrixXd(n_z, n_z);
+  S.fill(0.0);
+  for (int i = 0; i < 2 * n_aug_ + 1; i ++)
+  {
+    VectorXd z_diff = Zsig.col(i) - z_pred;
+    S += weights_(i) * z_diff* z_diff.transpose();
+  }
+
+  MatrixXd R = MatrixXd(2, 2);
+  R.fill(0.0);
+  R(0, 0) = std_laspx_ * std_laspx_;
+  R(1, 1) = std_laspy_ * std_laspy_;
+  S += R;
+
+  // 3. calc corss correlation matrix
+  MatrixXd Tc = MatrixXd(n_x_, n_z);
+  Tc.fill(0.0);
+  for (int i = 0; i < 2 * n_aug_ + 1; i ++)
+  {
+    VectorXd xdiff = Xsig_pred_.col(i) - x_;
+    if (xdiff(1) > M_PI) xdiff(1) -= 2*M_PI;
+    if (xdiff(1) < - M_PI) xdiff(1) += 2*M_PI;
+    
+    VectorXd zdiff = z - Zsig.col(i);
+    Tc += weights_(i) * xdiff *zdiff.transpose();
+  }
+
+  // 4. calculate kalman gain
+  MatrixXd K = Tc * S.inverse();
+  VectorXd diff = z - z_pred;
+  x_ = x_ + K * diff;
+
+  P_ = P_ - K * S * K.transpose();
+
+
 
   /**
   TODO:
@@ -307,7 +365,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
     VectorXd zdiff = z - Zsig.col(i);
     if (zdiff(1) > M_PI) zdiff(1) -= 2 *M_PI;
     if (zdiff(1) < M_PI) zdiff(1) += 2 *M_PI;
-    Tc += weights_(i) * zdiff *zdiff.transpose();
+    Tc += weights_(i) * xdiff *zdiff.transpose();
   }
 
   // 4. calculate kalman gain
