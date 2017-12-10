@@ -36,17 +36,18 @@ int main() {
 //TODO: Complete the initialize_priors function
 std::vector<float> initialize_priors(int map_size, std::vector<float> landmark_positions,
                                      float control_stdev) {
-    
-    uint positive_pos = uint(landmark_positions.size() * (1.0 + 2 * control_stdev));
-    float p_pos = 1.0 / float(positive_pos);
-    std::vector<float> v(0.0, map_size);
-    for (size_t i = 0; i < landmark_positions.size(); i ++)
+    float posibleCnt = landmark_positions.size() * (1 + control_stdev * 2);
+    float posiblePrb = 1.0 / posibleCnt;
+    std::vector<float> priors(map_size, 0.0);
+    for (int i = 0; i < landmark_positions.size(); i ++)
     {
-        float pos = landmark_positions[i];
-        for (float j = pos - control_stdev; j <= pos + control_stdev; j += 1.0)
-            v[int(j)] = p_pos;
-    }
-    return v;
+        float center = landmark_positions[i];
+        for (float j = center - control_stdev; j <= center + control_stdev; j = j + 1)
+        {
+            priors[int(j)] = posiblePrb;
+        }
+    } 
+    return priors;
 
 
 
