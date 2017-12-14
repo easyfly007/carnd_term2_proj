@@ -52,9 +52,11 @@ UKF::UKF() {
 
   // Radar measurement noise standard deviation angle in rad
   std_radphi_ = 0.03;
+  std_radphi_ = 0.0175;
 
   // Radar measurement noise standard deviation radius change in m/s
   std_radrd_ = 0.3;
+  std_radrd_ = 0.1;
 
   // Parameters above this line are scaffolding, do not modify
   n_aug_ = 7;
@@ -458,13 +460,13 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
     double py   = Xsig_pred_(1, i);
     double v    = Xsig_pred_(2, i);
     double yaw  = Xsig_pred_(3, i);
-    double yawd = Xsig_pred_(4, i);
+
+    double v1 = v * cos(yaw);
+    double v2 = v * sin(yaw);
+
     Zsig(0, i) = sqrt(px * px + py * py);
     Zsig(1, i) = atan2(py, px);
-    if (px*px + py*py < 1.0e-5)
-      Zsig(2, i) = 0.0;
-    else
-      Zsig(2, i) = (px * cos(yaw)* v + py * sin(yaw) * v )/ sqrt(px * px + py * py);
+    Zsig(2, i) = (px * v1 + py * v2) / sqrt(px * px + py * py);
   }
 
   if (debug)
@@ -486,13 +488,13 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   {
     VectorXd z_diff = Zsig.col(i) - z_pred;
     while (z_diff(1) > M_PI)
-      z_diff(1) -= 2 * M_PI;
+      z_diff(1) -= 2.0 * M_PI;
     while (z_diff(1) < -M_PI)
-      z_diff(1) += 2 * M_PI;
+      z_diff(1) += 2.0 * M_PI;
     S += weights_(i) * z_diff* z_diff.transpose();
   }
 
-  MatrixXd R = MatrixXd(3, 3);
+  MatrixXd R = MatrixXd(n_z, n_z);
   R.fill(0.0);
   R(0, 0) = std_radr_ * std_radr_;
   R(1, 1) = std_radphi_ * std_radphi_;
@@ -504,18 +506,18 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   Tc.fill(0.0);
   for (int i = 0; i < 2 * n_aug_ + 1; i ++)
   {
-    VectorXd xdiff = Xsig_pred_.col(i) - x_;
-    while (xdiff(3) > M_PI)
-      xdiff(3) -= 2*M_PI;
-    while (xdiff(3) < - M_PI)
-      xdiff(3) += 2*M_PI;
+    VectorXd x_diff = Xsig_pred_.col(i) - x_;
+    while (x_diff(3) > M_PI)
+      x_diff(3) -= 2*M_PI;
+    while (x_diff(3) < - M_PI)
+      x_diff(3) += 2*M_PI;
     
-    VectorXd zdiff = z - Zsig.col(i);
-    while (zdiff(1) > M_PI)
-      zdiff(1) -= 2 *M_PI;
-    while (zdiff(1) < M_PI)
-      zdiff(1) += 2 *M_PI;
-    Tc += weights_(i) * xdiff *zdiff.transpose();
+    VectorXd z_diff = Zsig.col(i) - z_pred;
+    while (z_diff(1) > M_PI)
+      z_diff(1) -= 2 *M_PI;
+    while (z_diff(1) < M_PI)
+      z_diff(1) += 2 *M_PI;
+    Tc += weights_(i) * x_diff *z_diff.transpose();
   }
 
   // 4. calculate kalman gain
