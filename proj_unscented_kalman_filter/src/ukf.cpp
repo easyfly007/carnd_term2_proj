@@ -277,7 +277,6 @@ void UKF::Prediction(double delta_t) {
     cout << "build Xsig_pred_ = " << endl << Xsig_pred_ << endl;
 
   // 3. calculate the predicted sigma points mean and covariance
-
   x_ = VectorXd(n_x_);
   P_ = MatrixXd(n_x_, n_x_);
   x_.fill(0.0);
@@ -285,16 +284,16 @@ void UKF::Prediction(double delta_t) {
   {
     x_ += weights_(i)* Xsig_pred_.col(i);
   }
-  P_.fill(0.0);
 
+  P_.fill(0.0);
   for (int i = 0; i < 2 * n_aug_ + 1; i ++)
   {
-    VectorXd diff = Xsig_pred_.col(i) - x_;
-    if (diff(3) > M_PI)
-      diff(3) -= 2 * M_PI;
-    if (diff(3) < - M_PI)
-      diff(3) += 2 * M_PI;
-    P_ += weights_(i) * (Xsig_pred_.col(i) - x_) * (Xsig_pred_.col(i) - x_).transpose(); 
+    VectorXd x_diff = Xsig_pred_.col(i) - x_;
+    while (x_diff(3) > M_PI)
+      x_diff(3) -= 2.0 * M_PI;
+    while (x_diff(3) < - M_PI)
+      x_diff(3) += 2 * M_PI;
+    P_ += weights_(i) * x_diff * x_diff.transpose();
   }
 
   if (debug)
