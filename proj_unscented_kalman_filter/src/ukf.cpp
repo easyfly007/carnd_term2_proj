@@ -35,11 +35,11 @@ UKF::UKF() {
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
   std_a_ = 30;
-  std_a_ = 1.0; // suppose the a_max is 2 m /s^2, then use std_a = 0.5 * a_max
+  std_a_ = 0.2; // suppose the a_max is 2 m /s^2, then use std_a = 0.5 * a_max
 
   // Process noise standard deviation yaw acceleration in rad/s^2
   std_yawdd_ = 30;
-  std_yawdd_ = 1.0; // shall we change it to smaller?
+  std_yawdd_ = 0.2; // shall we change it to smaller?
 
   // Laser measurement noise standard deviation position1 in m
   std_laspx_ = 0.15;
@@ -200,19 +200,16 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
  */
 void UKF::Prediction(double delta_t) {
   if (debug)
-    cout <<"\nbegin UKF::Prediction(), delta_t = " << delta_t << endl;
+    cout << "\nbegin UKF::Prediction(), delta_t = " << delta_t << endl;
   if (debug)
-    cout <<"the old x_ = " << endl << x_ << endl;
+    cout << "the old x_ = " << endl << x_ << endl;
   if (debug)
-    cout <<"the old P_ = " << endl << P_ << endl;
+    cout << "the old P_ = " << endl << P_ << endl;
 
   // 1. build augmented sigma popints
   VectorXd x_aug = VectorXd(n_aug_); // the mean for the augmented value
   x_aug.fill(0.0);
   x_aug.head(n_x_) = x_;
-
-  MatrixXd Xsig_aug = MatrixXd(n_aug_, 2 * n_aug_ + 1);
-  Xsig_aug.fill(0.0);
   
   MatrixXd P_aug = MatrixXd(n_aug_, n_aug_);
   P_aug.fill(0.0);
@@ -221,6 +218,9 @@ void UKF::Prediction(double delta_t) {
   P_aug(n_x_ + 1, n_x_ + 1) = std_yawdd_ * std_yawdd_;
 
   MatrixXd L = P_aug.llt().matrixL();
+  MatrixXd Xsig_aug = MatrixXd(n_aug_, 2 * n_aug_ + 1);
+  Xsig_aug.fill(0.0);
+
   Xsig_aug.col(0) = x_aug;
   for (int i = 0; i < n_aug_; i ++)
   {
