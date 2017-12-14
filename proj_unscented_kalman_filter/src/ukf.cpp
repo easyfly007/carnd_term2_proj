@@ -204,6 +204,12 @@ void UKF::Prediction(double delta_t) {
   if (debug)
     cout << "\nbegin UKF::Prediction(), delta_t = " << delta_t << endl;
   if (debug)
+    if (use_laser_ )
+      cout << "laser ..." << endl;
+    else
+      cout << "radar ..." << endl;
+    
+  if (debug)
     cout << "the old x_ = " << endl << x_ << endl;
   if (debug)
     cout << "the old P_ = " << endl << P_ << endl;
@@ -383,13 +389,7 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   for (int i = 0; i < 2 * n_aug_ + 1; i ++)
   {
     VectorXd xdiff = Xsig_pred_.col(i) - x_;
-
-    while (xdiff(3) > M_PI) 
-      xdiff(3) -= 2*M_PI;
-    while (xdiff(3) < - M_PI) 
-      xdiff(3) += 2*M_PI;
-    
-    VectorXd zdiff = z - Zsig.col(i);
+    VectorXd zdiff = Zsig.col(i) - z_pred;
     Tc += weights_(i) * xdiff *zdiff.transpose();
   }
 
