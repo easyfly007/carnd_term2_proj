@@ -224,8 +224,8 @@ void UKF::Prediction(double delta_t) {
   Xsig_aug.col(0) = x_aug;
   for (int i = 0; i < n_aug_; i ++)
   {
-    Xsig_aug.col(i + 1) = x_aug + sqrt(lambda_ + n_aug_) * L.col(i);
-    Xsig_aug.col(i + 1 + n_aug_) = x_aug - sqrt(lambda_ + n_aug_)*L.col(i);
+    Xsig_aug.col(i + 1)          = x_aug + sqrt(lambda_ + n_aug_) * L.col(i);
+    Xsig_aug.col(i + 1 + n_aug_) = x_aug - sqrt(lambda_ + n_aug_) * L.col(i);
   }
   if (debug)
     cout << "build Xsig_aug = " << endl << Xsig_aug << endl;
@@ -236,30 +236,41 @@ void UKF::Prediction(double delta_t) {
   Xsig_pred_ = MatrixXd(n_x_, 2 * n_aug_ + 1);
   for (int i = 0; i < 2 * n_aug_ + 1; i ++)
   {
-    VectorXd onePoint = VectorXd(n_x_);
     double px    = Xsig_aug(0, i);
     double py    = Xsig_aug(1, i);
     double v     = Xsig_aug(2, i);
     double yaw   = Xsig_aug(3, i);
     double yawd  = Xsig_aug(4, i);
-    double va    = Xsig_aug(5, i);
-    double yawdd = Xsig_aug(6, i);
-    if (fabs(yawd) < 1.0e-5)
+    double nu_a    = Xsig_aug(5, i);
+    double nu_yawdd = Xsig_aug(6, i);
+
+    double px_p, py_p;
+    if (fabs(yawd) < 0.001)
     {
-      Xsig_pred_(0, i) = Xsig_aug(0, i) + v * cos(yaw) * delta_t + 0.5 * cos(yaw) * va * delta_t * delta_t;
-      Xsig_pred_(1, i) = Xsig_aug(1, i) + v * sin(yaw) * delta_t + 0.5 * sin(yaw) * va * delta_t * delta_t;
+      px_p = px + v * delta_t * cos(yaw);
+      py_p = py + v * delta_t * sin(yaw);
     }
     else
     {
-      Xsig_pred_(0, i) = Xsig_aug(0, i) + v/ yawd *(sin(yaw + delta_t * yawd) - sin(yaw))
-        + 0.5 * cos(yaw) * va * delta_t * delta_t;
-      Xsig_pred_(1, i) = Xsig_aug(1, i) + v / yawd * (-cos(yaw+ delta_t * yawd) + cos(yaw))
-        + 0.5 * sin(yaw) * va * delta_t * delta_t;
+      px_p = px + v / yawd * (sin(yaw + yawd * delta_t) - sin(yaw));
+      py_p = py + v / yawd * (cos(yaw) - cos(yaw + yawd * delta_t));
     }
 
-    Xsig_pred_(2, i) = Xsig_aug(2, i) + va * delta_t;
-    Xsig_pred_(3, i) = Xsig_aug(3, i) + yawd * delta_t + 0.5 * yawdd * delta_t * delta_t;
-    Xsig_pred_(4, i) = Xsig_aug(4, i) + yawdd * delta_t;
+    double v_p = v;
+    double yaw_p = yaw + yawd * delta_t;
+    double yawd_p = yawd + yawd;
+
+    px_p = px_p + 0.5 * nu_a * delta_t * delta_t * cos(yaw);
+    py_p = py_p + 0.5 * nu_a * delta_t * delta_t * sin(yaw);
+    v_p = v_p + nu_a * delta_t;
+    yaw_p = yaw_p + 0.5 * nu_yawdd * delta_t * delta_t;
+    yawd_p = yawd_p + nu_yawdd * delta_t;
+
+    Xsig_pred_(0, i) = px_p;
+    Xsig_pred_(1, i) = py_p;
+    Xsig_pred_(2, i) = v_p;
+    Xsig_pred_(3, i) = yaw_p;
+    Xsig_pred_(4, i) = yawd_p;
   }
 
   if (debug)
@@ -426,7 +437,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   if (debug)
     cout << "old P_ = " << endl << P_ << endl;
 
-  // reuse the Xsig_pred from the predict sigma points
+  // reuse the Xsig_pred_ from the predict sigma points
   // 1. switch from CVRT to radar z space
   int n_z = 3;
   MatrixXd Zsig = MatrixXd(n_z, 2 * n_aug_ + 1);
