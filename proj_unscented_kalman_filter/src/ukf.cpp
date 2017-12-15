@@ -27,11 +27,13 @@ UKF::UKF() {
   // if this is false, radar measurements will be ignored (except during init)
   use_radar_ = true;
 
+  n_x_ = 5;
+
   // initial state vector
-  x_ = VectorXd(5);
+  x_ = VectorXd(n_x_);
 
   // initial covariance matrix
-  P_ = MatrixXd(5, 5);
+  P_ = MatrixXd(n_x_, n_x_);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
   std_a_ = 30;
@@ -52,11 +54,11 @@ UKF::UKF() {
 
   // Radar measurement noise standard deviation angle in rad
   std_radphi_ = 0.03;
-  std_radphi_ = 0.0175;
+  //std_radphi_ = 0.0175;
 
   // Radar measurement noise standard deviation radius change in m/s
   std_radrd_ = 0.3;
-  std_radrd_ = 0.1;
+  //std_radrd_ = 0.1;
 
   // Parameters above this line are scaffolding, do not modify
   n_aug_ = 7;
@@ -144,9 +146,9 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
       yawd = 0.0;
       P_ << 1, 0, 0, 0, 0,
             0, 1, 0, 0, 0,
-            0, 0, 100, 0, 0,
-            0, 0, 0, 100, 0,
-            0, 0, 0, 0, 1000;
+            0, 0, 10, 0, 0,
+            0, 0, 0, 10, 0,
+            0, 0, 0, 0, 100;
       // px and py are high accurate, 
       // v is less accurate, yaw and yawd is actually not known
     }
@@ -159,9 +161,9 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
       yawd = 0.0;
       P_ << 1, 0, 0, 0, 0,
             0, 1, 0, 0, 0,
-            0, 0, 1000, 0, 0,
-            0, 0, 0, 1000, 0,
-            0, 0, 0, 0, 1000;
+            0, 0, 10, 0, 0,
+            0, 0, 0, 10, 0,
+            0, 0, 0, 0, 10;
     }
     x_(0) = px;
     x_(1) = py;
