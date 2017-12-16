@@ -28,6 +28,7 @@ UKF::UKF() {
   use_radar_ = true;
 
   n_x_ = 5;
+  n_aug_ = 7;
 
   // initial state vector
   x_ = VectorXd(n_x_);
@@ -60,11 +61,6 @@ UKF::UKF() {
   std_radrd_ = 0.3;
   //std_radrd_ = 0.1;
 
-  // Parameters above this line are scaffolding, do not modify
-  n_aug_ = 7;
-  
-  n_x_ = 5;
-
   is_initialized_ = false;
   
   // Xsig_pred_ = MatrixXd(n_x_, 2 * n_aug_ + 1);
@@ -75,7 +71,13 @@ UKF::UKF() {
   weights_(0) = lambda_ / (lambda_ + n_aug_);
   for (int i = 1; i < 2 * n_aug_ + 1; i ++)
     weights_(i) = 0.5 / (lambda_ + n_aug_);
+
+  Xsig_pred_ = MatrixXd(n_x_, 2 * n_aug_ + 1);
+
+  time_us_ = 0.0;
   
+  NIS_radar_ = 0.0;
+  NIS_laser_ = 0.0;
 
   /**
   TODO:
@@ -130,25 +132,25 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     double px, py, v, yaw, yawd;
     if (meas_package.sensor_type_ == MeasurementPackage::RADAR) 
     {
-      double ro = meas_package.raw_measurements_[0];
-      double theta = meas_package.raw_measurements_[1];
-      double ro_dot = meas_package.raw_measurements_[2];
+      double rho = meas_package.raw_measurements_(0);
+      double theta = meas_package.raw_measurements_(1);
+      double rho_dot = meas_package.raw_measurements_(2);
       while (theta > M_PI)
         theta -= 2 * M_PI;
       while (theta < - M_PI)
         theta += 2 * M_PI;
 
       // change from radar space to CTRV space
-      px = ro * cos(theta);
-      py = ro * sin(theta);
-      v  = ro_dot;
+      px = rho * cos(theta);
+      py = rho * sin(theta);
+      v  = rho_dot;
       yaw = theta;
       yawd = 0.0;
       P_ << 1, 0, 0, 0, 0,
             0, 1, 0, 0, 0,
             0, 0, 10, 0, 0,
             0, 0, 0, 10, 0,
-            0, 0, 0, 0, 100;
+            0, 0, 0, 0, 10;
       // px and py are high accurate, 
       // v is less accurate, yaw and yawd is actually not known
     }
@@ -175,6 +177,8 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
       cout << "the initial value for x_ = " << endl << x_ << endl;
     if (debug)
       cout << "the initial value for P_ = " << endl << P_ << endl;
+    time_us_ = meas_package.timestamp_;
+    return;
   }
 
   float dt = (meas_package.timestamp_ - time_us_) / 1000000.0;
