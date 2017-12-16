@@ -8,7 +8,7 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using std::vector;
 
-bool debug = true;
+bool debug = false;
 
 // for pi value visit, M_PI
 #define _USE_MATH_DEFINES
@@ -269,7 +269,7 @@ void UKF::Prediction(double delta_t) {
 
     double v_p = v;
     double yaw_p = yaw + yawd * delta_t;
-    double yawd_p = yawd + yawd;
+    double yawd_p = yawd;
 
     px_p = px_p + 0.5 * nu_a * delta_t * delta_t * cos(yaw);
     py_p = py_p + 0.5 * nu_a * delta_t * delta_t * sin(yaw);
@@ -421,7 +421,7 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   // calc NIS
   double nis = (z - z_pred).transpose() * S.inverse() * (z - z_pred);
 
-  if (debug)
+  // if (debug)
     cout << "time = " << meas_package.timestamp_ << ", meas = Lidar, NIS = " << nis << endl;
 
   /**
@@ -551,7 +551,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
     cout << "udpated P_ = " << endl << P_ << endl;
 
   double nis = (z - z_pred).transpose() * S.inverse() * (z - z_pred);
-  if (debug)
+  // if (debug)
     cout << "time = " << meas_package.timestamp_ << ", meas = RADAR, NIS = " << nis << endl;
 
   /**
