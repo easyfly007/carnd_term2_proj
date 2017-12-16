@@ -290,11 +290,14 @@ void UKF::Prediction(double delta_t) {
   // 3. calculate the predicted sigma points mean and covariance
   x_ = VectorXd(n_x_);
   P_ = MatrixXd(n_x_, n_x_);
-  x_.fill(0.0);
-  for (int i = 0; i < 2 * n_aug_ + 1; i ++)
-  {
-    x_ += weights_(i)* Xsig_pred_.col(i);
-  }
+  
+  x_ = Xsig_pred_ * weights_;
+
+  // x_.fill(0.0);
+  // for (int i = 0; i < 2 * n_aug_ + 1; i ++)
+  // {
+  //   x_ += weights_(i)* Xsig_pred_.col(i);
+  // }
 
   P_.fill(0.0);
   for (int i = 0; i < 2 * n_aug_ + 1; i ++)
@@ -474,7 +477,10 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
 
     Zsig(0, i) = sqrt(px * px + py * py);
     Zsig(1, i) = atan2(py, px);
-    Zsig(2, i) = (px * v1 + py * v2) / sqrt(px * px + py * py);
+    if (sqrt(px * px + py * py) < 0.001)
+      Zsig(2, i) = 0.0;
+    else
+      Zsig(2, i) = (px * v1 + py * v2) / sqrt(px * px + py * py);
   }
 
   if (debug)
