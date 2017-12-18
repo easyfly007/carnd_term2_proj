@@ -71,7 +71,7 @@ UKF::UKF() {
   R_laser_(0, 0) = std_laspx_ * std_laspx_;
   R_laser_(1, 1) = std_laspy_ * std_laspy_;
   
-  R_radar_ = MatrixXd(n_z, n_z);
+  R_radar_ = MatrixXd(3, 3);
   R_radar_.fill(0.0);
   R_radar_(0, 0) = std_radr_ * std_radr_;
   R_radar_(1, 1) = std_radphi_ * std_radphi_;
