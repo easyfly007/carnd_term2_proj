@@ -43,12 +43,12 @@ UKF::UKF() {
   // Process noise standard deviation longitudinal acceleration in m/s^2
   std_a_ = 30;
   std_a_ = 0.2; // suppose the a_max is 2 m /s^2, then use std_a = 0.5 * a_max
-  std_a_ = 1.;
+  std_a_ = 3.;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
   std_yawdd_ = 30;
-  std_yawdd_ = 0.2; // shall we change it to smaller?
-  std_yawdd_ = 0.1;
+  std_yawdd_ = 0.5; // shall we change it to smaller?
+  // std_yawdd_ = 3.1;
 
   // Laser measurement noise standard deviation position1 in m
   std_laspx_ = 0.15;
