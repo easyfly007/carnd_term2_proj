@@ -1,5 +1,5 @@
 #include <iostream>
-#include <algorithm>
+#include <algorithm> // for sort
 #include <vector>
 
 #include "helpers.h"
@@ -60,6 +60,7 @@ std::vector<float> pseudo_range_estimator(std::vector<float> landmark_positions,
 
     //sort pseudo range vector:
         //YOUR CODE HERE
+    sort(pseudo_ranges.begin(), pseudo_ranges.end());
     
     return pseudo_ranges;
 }
