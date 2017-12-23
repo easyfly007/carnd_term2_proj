@@ -47,7 +47,13 @@ std::vector<float> pseudo_range_estimator(std::vector<float> landmark_positions,
     
     //define pseudo observation vector:
     std::vector<float> pseudo_ranges;
-            
+    for (std::vector<float>::iterator it = landmark_positions.begin();
+        it != landmark_positions.end(); it ++)
+    {
+        float pseudo_range = *it - pseudo_position;
+        if (pseudo_range >0.0)
+            pseudo_ranges.push_back(pseudo_range);
+    }            
     //loop over number of landmarks and estimate pseudo ranges:
         //YOUR CODE HERE
         

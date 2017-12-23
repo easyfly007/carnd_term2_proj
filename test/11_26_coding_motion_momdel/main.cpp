@@ -51,6 +51,12 @@ float motion_model(float pseudo_position, float movement, std::vector<float> pri
 
     //initialize probability
     float position_prob = 0.0f;
+    for (int i = 0; i < map_size; i ++)
+    {
+        float prior_pos = float(i);
+        float prior_prb = priors[i];
+        position_prob += Helpers::normpdf(prior_pos + movement - prior_pos, control_stdev) * prior_pos;
+    }
     
     //YOUR CODE HERE
 
@@ -59,7 +65,7 @@ float motion_model(float pseudo_position, float movement, std::vector<float> pri
 }
 
 //initialize priors assumimg vehicle at landmark +/- 1.0 meters position stdev
-std::vector<float> initialize_priors(int map_size, std::vector<float> landmark_positions,
+std::vector<float> initialize_priors(int map_size, std::vector<float> &landmark_positions,
                                      float control_stdev) {
 //initialize priors assumimg vehicle at landmark +/- 1.0 meters position stdev
 
