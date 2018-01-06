@@ -12,6 +12,10 @@
 #include "helper_functions.h"
 
 struct Particle {
+	Particle(int id1 = 0, double x1 = 0., double y1 = 0., double theta1 = 0.)
+	:id(id1), x(x1), y(y1), theta(theta1){
+		weight = 0.0;
+	};
 
 	int id;
 	double x;
