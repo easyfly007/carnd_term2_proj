@@ -93,6 +93,25 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 	//   observed measurement to this particular landmark.
 	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
 	//   implement this method and use it as a helper during the updateWeights phase.
+	for (uint i = 0; i < predicted.size(); i ++)
+	{
+		double x1 = predicted[i].x;
+		double y1 = predicted[i].y;
+		double min_distance = -1.0;
+		int matchedj = -1;
+		for (int j = 0; j < observations.size(); j ++)
+		{
+			double x2 = observations[j].x;
+			double y2 = observations[j].y;
+			double distance = dist(x1, y1, x2, y2);
+			if (min_distance < 0.0 ||  min_distance > distance)
+			{
+				min_distance = distance;
+				matchedj = j;
+			}
+		}
+		std::cout << " the " << i << " particle nearest observation " << matchedj << endl; 
+	}
 
 }
 
@@ -108,6 +127,52 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   and the following is a good resource for the actual equation to implement (look at equation 
 	//   3.33
 	//   http://planning.cs.uiuc.edu/node99.html
+
+	weights.clear();
+
+	for (int i = 0; i < num_particles; i ++)
+	{
+		double particle_x = particles[i].x;
+		double particle_y = particles[i].y;
+		double particle_theta = particles[i].theta;
+
+		double weight = 1.0;
+		// for each particle, check all the observations
+		for (int j = 0; j < observations.size(); j ++)
+		{
+			int landmark_id = observations[j].id;
+			double car_coord_obs_x = observations[j].x;
+			double car_coord_obs_y = observations[j].y;
+
+			// get the landmark pos by landmark_id
+			Map::single_landmark_s matched_landmark;
+			for (int k = 0; k < map_landmarks.landmark_list.size(); k ++)
+			{
+				if (map_landmarks.landmark_list[k].id_i == landmark_id)
+				{
+					matched_landmark = map_landmarks.landmark_list[k];
+					break;
+				}
+			}
+
+			// switch the observation from car co-ordinate to map coordinate
+			double map_coord_obs_x = 
+				cos(particle_theta) * car_coord_obs_x - sin(particle_theta) * car_coord_obs_y + particle_x;
+			double map_coord_obs_y = 
+				sin(particle_theta) * car_coord_obs_x + cos(particle_theta) * car_coord_obs_y + particle_y;
+
+			double ground_truth_landmark_x = matched_landmark.x_f;
+			double ground_truth_landmark_y = matched_landmark.y_f;
+
+			double gaussian_norm = 0.5 / (std_landmark[0] * std_landmark[1]);
+			double exponent = - pow((map_coord_obs_x - ground_truth_landmark_x),2) / (2 * pow(std_landmark[0],2)) 
+				- pow((map_coord_obs_y - ground_truth_landmark_y),2) / (2 * pow(std_landmark[1],2));
+
+			weight *= gaussian_norm * exp(exponent);
+		}
+		weights.push_back(weight);
+	}
+ 
 }
 
 void ParticleFilter::resample() {
