@@ -39,7 +39,9 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 		double sample_y = dist_y(gen);
 		double sample_theta = dist_theta(gen);
 		particles.push_back(Particle(i-1, sample_x, sample_y, sample_theta));
+		weights.push_back(1.0);
 	}
+
 	is_initialized = true;
 	
 }
@@ -93,25 +95,46 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 	//   observed measurement to this particular landmark.
 	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
 	//   implement this method and use it as a helper during the updateWeights phase.
-	for (uint i = 0; i < predicted.size(); i ++)
+
+	for (int i = 0; i < observations.size(); i ++)
 	{
-		double x1 = predicted[i].x;
-		double y1 = predicted[i].y;
+		double x1 = observations[i].x;
+		double y1 = observations[i].y;
 		double min_distance = -1.0;
-		int matchedj = -1;
-		for (int j = 0; j < observations.size(); j ++)
+		int matched_landmark_id = -1;
+		for (int j = 0; j < predicted.size(); j ++)
 		{
-			double x2 = observations[j].x;
-			double y2 = observations[j].y;
+			double x2 = predicted[j].x;
+			double y2 = predicted[j].y;
 			double distance = dist(x1, y1, x2, y2);
-			if (min_distance < 0.0 ||  min_distance > distance)
+			if (min_distance < 0.0 || min_distance > distance)
 			{
 				min_distance = distance;
-				matchedj = j;
+				matched_landmark_id = j;
 			}
 		}
-		std::cout << " the " << i << " particle nearest observation " << matchedj << endl; 
+		observations[i].id = matched_landmark_id;
 	}
+
+	// for (uint i = 0; i < predicted.size(); i ++)
+	// {
+	// 	double x1 = predicted[i].x;
+	// 	double y1 = predicted[i].y;
+	// 	double min_distance = -1.0;
+	// 	int matched_j = -1;
+	// 	for (int j = 0; j < observations.size(); j ++)
+	// 	{
+	// 		double x2 = observations[j].x;
+	// 		double y2 = observations[j].y;
+	// 		double distance = dist(x1, y1, x2, y2);
+	// 		if (min_distance < 0.0 ||  min_distance > distance)
+	// 		{
+	// 			min_distance = distance;
+	// 			matched_j = j;
+	// 		}
+	// 	}
+	// 	std::cout << " the " << i << " particle nearest observation " << matched_j << endl; 
+	// }
 
 }
 
@@ -128,7 +151,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   3.33
 	//   http://planning.cs.uiuc.edu/node99.html
 
-	weights.clear();
+	double weights_sum = 0.0;
 
 	for (int i = 0; i < num_particles; i ++)
 	{
@@ -170,8 +193,13 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 			weight *= gaussian_norm * exp(exponent);
 		}
-		weights.push_back(weight);
+		weights[i] = weight;
+		weights_sum += weight;
 	}
+
+	// normalize the weights
+	for (int i = 0; i < weights.size(); i ++)
+		weights[i] /= weights_sum;
  
 }
 
@@ -179,7 +207,15 @@ void ParticleFilter::resample() {
 	// TODO: Resample particles with replacement with probability proportional to their weight. 
 	// NOTE: You may find std::discrete_distribution helpful here.
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
-
+	std::vector<Particle> new_particles;
+	default_random_engine gen;
+	discrete_distribution<> dist(weights.begin(), weights.end());
+	for (int i = 0; i < num_particles; i ++)
+	{
+		int sample = dist(gen);
+		new_particles.push_back(particles[sample]);
+	}
+	particles = new_particles;
 }
 
 Particle ParticleFilter::SetAssociations(Particle particle, std::vector<int> associations, std::vector<double> sense_x, std::vector<double> sense_y)
