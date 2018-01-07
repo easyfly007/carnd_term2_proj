@@ -46,7 +46,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 }
 
 void ParticleFilter::prediction
-(double delta_t, double std_pos[], double velocity, double yaw_rate) {
+	(double delta_t, double std_pos[], double velocity, double yaw_rate) {
 	// TODO: Add measurements to each particle and add random Gaussian noise.
 	// NOTE: When adding noise you may find std::normal_distribution and std::default_random_engine useful.
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
@@ -115,7 +115,7 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 			if (min_distance < 0.0 || min_distance > distance)
 			{
 				min_distance = distance;
-				matched_landmark_id = j;
+				matched_landmark_id = predicted[j].id;
 			}
 		}
 		observations[i].id = matched_landmark_id;
@@ -135,9 +135,6 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   and the following is a good resource for the actual equation to implement (look at equation 
 	//   3.33
 	//   http://planning.cs.uiuc.edu/node99.html
-
-	
-	
 
 	double weights_sum = 0.0;
 
@@ -171,9 +168,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			double car_coord_obs_y = observations[j].y;
 
 			double map_coord_obs_x = 
-				cos(particle_theta) * car_coord_obs_x - sin(particle_theta) * car_coord_obs_y + particle_x;
+				cos(particle_theta) * car_coord_obs_x - sin(particle_theta) * car_coord_obs_y;//  + particle_x;
 			double map_coord_obs_y = 
-				sin(particle_theta) * car_coord_obs_x + cos(particle_theta) * car_coord_obs_y + particle_y;
+				sin(particle_theta) * car_coord_obs_x + cos(particle_theta) * car_coord_obs_y;// + particle_y;
 			
 			LandmarkObs map_obs;
 			map_obs.x = map_coord_obs_x;
