@@ -38,12 +38,11 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 		double sample_x = dist_x(gen);
 		double sample_y = dist_y(gen);
 		double sample_theta = dist_theta(gen);
-		particles.push_back(Particle(i-1, sample_x, sample_y, sample_theta));
+		particles.push_back(Particle(i, sample_x, sample_y, sample_theta));
 		weights.push_back(1.0);
 	}
 
 	is_initialized = true;
-	
 }
 
 void ParticleFilter::prediction
@@ -56,7 +55,7 @@ void ParticleFilter::prediction
 	default_random_engine gen;
 	double std_x = std_pos[0];
 	double std_y = std_pos[1];
-	// double std_theta = std_pos[2];
+	double std_theta = std_pos[2];
 
 	for (int i = 0; i < num_particles; i ++)
 	{
@@ -66,10 +65,11 @@ void ParticleFilter::prediction
 		
 		normal_distribution<double> dist_x(x0, std_x);
 		normal_distribution<double> dist_y(y0, std_y);
-		// normal_distribution<double> dist_theta(theta, std_theta);
+		normal_distribution<double> dist_theta(theta0, std_theta);
 
 		x0 = dist_x(gen);
 		y0 = dist_y(gen);
+		theta0 = dist_theta(gen);
 
 		double x1, y1, theta1;
 		if (abs(yaw_rate) > 1.0e-5)
@@ -96,6 +96,11 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
 	//   implement this method and use it as a helper during the updateWeights phase.
 
+	// this is for one particle,
+	// predicted: the predicted measurements for each landmark, measured from this particle filter position
+	//            size is landmark_size
+	// observations: the truelly measured result, whose size will be less than landmark_size
+	// the purpose of this function is to update observation id to the matched predicted order
 	for (int i = 0; i < observations.size(); i ++)
 	{
 		double x1 = observations[i].x;
@@ -116,26 +121,6 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 		observations[i].id = matched_landmark_id;
 	}
 
-	// for (uint i = 0; i < predicted.size(); i ++)
-	// {
-	// 	double x1 = predicted[i].x;
-	// 	double y1 = predicted[i].y;
-	// 	double min_distance = -1.0;
-	// 	int matched_j = -1;
-	// 	for (int j = 0; j < observations.size(); j ++)
-	// 	{
-	// 		double x2 = observations[j].x;
-	// 		double y2 = observations[j].y;
-	// 		double distance = dist(x1, y1, x2, y2);
-	// 		if (min_distance < 0.0 ||  min_distance > distance)
-	// 		{
-	// 			min_distance = distance;
-	// 			matched_j = j;
-	// 		}
-	// 	}
-	// 	std::cout << " the " << i << " particle nearest observation " << matched_j << endl; 
-	// }
-
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
@@ -151,6 +136,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   3.33
 	//   http://planning.cs.uiuc.edu/node99.html
 
+	
+	
+
 	double weights_sum = 0.0;
 
 	for (int i = 0; i < num_particles; i ++)
@@ -159,48 +147,94 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		double particle_y = particles[i].y;
 		double particle_theta = particles[i].theta;
 
-		double weight = 1.0;
-		// for each particle, check all the observations
+		// calc predicted observations for each land mark, whih will be in the map coordinate
+		std::vector<LandmarkObs> predicted;
+		for (int j = 0; j < map_landmarks.landmark_list.size(); j ++)
+		{
+			int    landmark_id = map_landmarks.landmark_list[j].id_i;
+			double landmark_x  = map_landmarks.landmark_list[j].x_f;
+			double landmark_y  = map_landmarks.landmark_list[j].y_f;
+			
+			LandmarkObs obs;
+			obs.id = landmark_id;
+			obs.x = landmark_x - particle_x;
+			obs.y = landmark_y - particle_y;
+			predicted.push_back(obs);
+		}
+
+		// transfer the observations from car coordinate to map coordinate
+		std::vector<LandmarkObs> map_coord_observations; 
 		for (int j = 0; j < observations.size(); j ++)
 		{
-			int landmark_id = observations[j].id;
+			// int landmark_id = observations[j].id;
 			double car_coord_obs_x = observations[j].x;
 			double car_coord_obs_y = observations[j].y;
 
-			// get the landmark pos by landmark_id
-			Map::single_landmark_s matched_landmark;
-			for (int k = 0; k < map_landmarks.landmark_list.size(); k ++)
-			{
-				if (map_landmarks.landmark_list[k].id_i == landmark_id)
-				{
-					matched_landmark = map_landmarks.landmark_list[k];
-					break;
-				}
-			}
-
-			// switch the observation from car co-ordinate to map coordinate
 			double map_coord_obs_x = 
 				cos(particle_theta) * car_coord_obs_x - sin(particle_theta) * car_coord_obs_y + particle_x;
 			double map_coord_obs_y = 
 				sin(particle_theta) * car_coord_obs_x + cos(particle_theta) * car_coord_obs_y + particle_y;
+			
+			LandmarkObs map_obs;
+			map_obs.x = map_coord_obs_x;
+			map_obs.y = map_coord_obs_y;
+			map_obs.id = 0;
+			map_coord_observations.push_back(map_obs);
+		}
 
-			double ground_truth_landmark_x = matched_landmark.x_f;
-			double ground_truth_landmark_y = matched_landmark.y_f;
+		// now we have the predicted obs for each landmarks, and truely obs detected,
+		// both obs are in the same map coordinate
+
+		dataAssociation(predicted, map_coord_observations);
+		// now the map_coord_observations id has been matched to the landmarks
+
+		// update particle associations, sense_x, sense_y
+		vector<int>   associations;
+		vector<double> sense_x;
+		vector<double> sense_y;
+
+		// get the weight for this particle, by multiply each obs probability
+		double weight = 1.0;
+		for (int j = 0; j < map_coord_observations.size(); j ++)
+		{
+			double map_coord_obs_x = map_coord_observations[j].x;
+			double map_coord_obs_y = map_coord_observations[j].y;
+			int matched_landmark_id = map_coord_observations[j].id;
+
+			// get the matched landmark prediction
+			LandmarkObs matched_obs;
+			for (int k = 0; k < predicted.size(); k ++)
+			{
+				if (predicted[k].id == matched_landmark_id)
+				{
+					matched_obs = predicted[k];
+					break;
+				}
+			}
+			
+
+			double map_coord_pred_x = matched_obs.x;
+			double map_coord_pred_y = matched_obs.y;
+
+			associations.push_back(matched_landmark_id);
+			sense_x.push_back(matched_obs.x + particles[i].x);
+			sense_y.push_back(matched_obs.y + particles[i].y); 
 
 			double gaussian_norm = 0.5 / (std_landmark[0] * std_landmark[1]);
-			double exponent = - pow((map_coord_obs_x - ground_truth_landmark_x),2) / (2 * pow(std_landmark[0],2)) 
-				- pow((map_coord_obs_y - ground_truth_landmark_y),2) / (2 * pow(std_landmark[1],2));
-
+			double exponent = - pow((map_coord_obs_x - map_coord_pred_x),2) / (2 * pow(std_landmark[0],2)) 
+				- pow((map_coord_obs_y - map_coord_obs_y),2) / (2 * pow(std_landmark[1],2));
 			weight *= gaussian_norm * exp(exponent);
 		}
 		weights[i] = weight;
 		weights_sum += weight;
+
+		particles[i] = SetAssociations(particles[i], associations, sense_x, sense_y);
+
 	}
 
 	// normalize the weights
 	for (int i = 0; i < weights.size(); i ++)
 		weights[i] /= weights_sum;
- 
 }
 
 void ParticleFilter::resample() {
@@ -218,9 +252,11 @@ void ParticleFilter::resample() {
 	particles = new_particles;
 }
 
-Particle ParticleFilter::SetAssociations(Particle particle, std::vector<int> associations, std::vector<double> sense_x, std::vector<double> sense_y)
+Particle ParticleFilter::SetAssociations(
+	Particle particle, std::vector<int> associations, std::vector<double> sense_x, std::vector<double> sense_y)
 {
-	//particle: the particle to assign each listed association, and association's (x,y) world coordinates mapping to
+	//particle: the particle to assign each listed association, 
+	//          and association's (x,y) world coordinates mapping to
 	// associations: The landmark id that goes along with each listed association
 	// sense_x: the associations x mapping already converted to world coordinates
 	// sense_y: the associations y mapping already converted to world coordinates
