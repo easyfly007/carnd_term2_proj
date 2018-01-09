@@ -106,39 +106,30 @@ class Robot(object):
 def run_p(robot, tau, n=100, speed=1.0):
     x_trajectory = []
     y_trajectory = []
-    last_CTE = robot.y
     for i in range(n):
-        CTE = robot.y
-        diff_CTE = CTE - last_CTE
-        last_CTE = CTE
-        steer = -tau * CTE - tau_d * diff_CTE
+        cte = robot.y
+        steer = -tau * cte
         robot.move(steer, speed)
         x_trajectory.append(robot.x)
         y_trajectory.append(robot.y)
     return x_trajectory, y_trajectory
 
-# steering = -tau_p * CTE - tau_d * diff_CTE
-# where differential crosstrack error (diff_CTE)
-# is given by CTE(t) - CTE(t-1)
-
-
-
-
-robot = Robot()
-robot.set(0, 1, 0)
-
 def run(robot, tau_p, tau_d, n=100, speed=1.0):
     x_trajectory = []
     y_trajectory = []
-    last_y = robot.y
+    last_CTE = robot.y
     for i in range(n):
-        steering = - crosstrack * tau_p;
-        steering -= tau_d * (robot.y - last_y) / 1. 
+        CTE = robot.y
+        diff_CTE = CTE - last_CTE
+        last_CTE = CTE
+        steer = -tau_p * CTE - tau_d * diff_CTE
+        robot.move(steer, speed)
         x_trajectory.append(robot.x)
         y_trajectory.append(robot.y)
-        robot.run_p()
-    # TODO: your code here
     return x_trajectory, y_trajectory
+
+robot = Robot()
+robot.set(0, 1, 0)
     
 x_trajectory, y_trajectory = run(robot, 0.2, 3.0)
 n = len(x_trajectory)
