@@ -226,6 +226,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		weights_sum += weight;
 
 		particles[i] = SetAssociations(particles[i], associations, sense_x, sense_y);
+		particles[i].weight = weight;
 
 	}
 
