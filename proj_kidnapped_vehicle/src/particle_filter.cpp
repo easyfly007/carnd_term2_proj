@@ -62,14 +62,7 @@ void ParticleFilter::prediction
 		double x0 = particles[i].x;
 		double y0 = particles[i].y;
 		double theta0 = particles[i].theta;
-		
-		normal_distribution<double> dist_x(x0, std_x);
-		normal_distribution<double> dist_y(y0, std_y);
-		normal_distribution<double> dist_theta(theta0, std_theta);
 
-		x0 = dist_x(gen);
-		y0 = dist_y(gen);
-		theta0 = dist_theta(gen);
 
 		double x1, y1, theta1;
 		if (abs(yaw_rate) > 1.0e-5)
@@ -83,7 +76,16 @@ void ParticleFilter::prediction
 			y1 = y0 + velocity * cos(theta0) * delta_t;
 		}
 		theta1 = theta0 + yaw_rate * delta_t;
+
 		
+		normal_distribution<double> dist_x(x1, std_x);
+		normal_distribution<double> dist_y(y1, std_y);
+		normal_distribution<double> dist_theta(theta1, std_theta);
+
+		x1 = dist_x(gen);
+		y1 = dist_y(gen);
+		theta1 = dist_theta(gen);
+
 		particles[i].x = x1;
 		particles[i].y = y1;
 		particles[i].theta = theta1;
