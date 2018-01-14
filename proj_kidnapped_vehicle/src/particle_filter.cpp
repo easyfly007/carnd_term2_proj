@@ -120,7 +120,8 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 				matched_landmark_id = j;
 			}
 		}
-		observations[i].id = matched_landmark_id;
+		observations[i].id = matched_landmark_id; 
+		// actually here the id means the order of the landmark, not the actual id 
 	}
 
 }
@@ -140,26 +141,26 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 	double weights_sum = 0.0;
 
+	// calc landmark observations for each land mark, whih will be in the map coordinate
+	std::vector<LandmarkObs> map_coord_landmarks;
+	for (int j = 0; j < map_landmarks.landmark_list.size(); j ++)
+	{
+		int    landmark_id = map_landmarks.landmark_list[j].id_i;
+		double landmark_x  = map_landmarks.landmark_list[j].x_f;
+		double landmark_y  = map_landmarks.landmark_list[j].y_f;
+		
+		LandmarkObs obs;
+		obs.id = landmark_id;
+		obs.x = landmark_x;
+		obs.y = landmark_y;
+		map_coord_landmarks.push_back(obs);
+	}
+
 	for (int i = 0; i < num_particles; i ++)
 	{
 		double particle_x = particles[i].x;
 		double particle_y = particles[i].y;
 		double particle_theta = particles[i].theta;
-
-		// calc predicted observations for each land mark, whih will be in the map coordinate
-		std::vector<LandmarkObs> predicted;
-		for (int j = 0; j < map_landmarks.landmark_list.size(); j ++)
-		{
-			int    landmark_id = map_landmarks.landmark_list[j].id_i;
-			double landmark_x  = map_landmarks.landmark_list[j].x_f;
-			double landmark_y  = map_landmarks.landmark_list[j].y_f;
-			
-			LandmarkObs obs;
-			obs.id = landmark_id;
-			obs.x = landmark_x;// - particle_x;
-			obs.y = landmark_y;// - particle_y;
-			predicted.push_back(obs);
-		}
 
 		// transfer the observations from car coordinate to map coordinate
 		std::vector<LandmarkObs> map_coord_observations; 
@@ -177,18 +178,18 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			LandmarkObs map_obs;
 			map_obs.x = map_coord_obs_x;
 			map_obs.y = map_coord_obs_y;
-			map_obs.id = 0;
+			map_obs.id = observations[j].id;
 			map_coord_observations.push_back(map_obs);
 		}
 
 		// now we have the predicted obs for each landmarks, and truely obs detected,
 		// both obs are in the same map coordinate
 
-		dataAssociation(predicted, map_coord_observations);
+		dataAssociation(map_coord_landmarks, map_coord_observations);
 		// now the map_coord_observations id has been matched to the landmarks
 
 		// update particle associations, sense_x, sense_y
-		vector<int>   associations;
+		vector<int>    associations;
 		vector<double> sense_x;
 		vector<double> sense_y;
 
@@ -198,21 +199,24 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		{
 			double map_coord_obs_x = map_coord_observations[j].x;
 			double map_coord_obs_y = map_coord_observations[j].y;
-			int matched_landmark_id = map_coord_observations[j].id;
+			int matched_landmark_order = map_coord_observations[j].id;
 
 			// get the matched landmark prediction
-			LandmarkObs matched_obs = predicted[matched_landmark_id];
+			LandmarkObs matched_landmark = map_coord_landmarks[matched_landmark_order];
 
-			double map_coord_pred_x = matched_obs.x;
-			double map_coord_pred_y = matched_obs.y;
+			double map_coord_landmark_x = matched_landmark.x;
+			double map_coord_landmark_y = matched_landmark.y;
 
-			associations.push_back(matched_obs.id);
-			sense_x.push_back(matched_obs.x);// + particles[i].x);
-			sense_y.push_back(matched_obs.y);// + particles[i].y); 
+			associations.push_back(matched_landmark.id);
+			sense_x.push_back(matched_landmark.x);
+			sense_y.push_back(matched_landmark.y);
+
+			double dist_x = map_coord_landmark_x - map_coord_obs_x;
+			double dist_y = map_coord_landmark_y - map_coord_obs_y;
 
 			double gaussian_norm = 0.5 / (std_landmark[0] * std_landmark[1]);
-			double exponent = - pow((map_coord_obs_x - map_coord_pred_x),2) / (2 * pow(std_landmark[0],2)) 
-				- pow((map_coord_obs_y - map_coord_obs_y),2) / (2 * pow(std_landmark[1],2));
+			double exponent = - pow(dist_x, 2) / (2 * pow(std_landmark[0],2)) 
+				- pow(dist_y, 2) / (2 * pow(std_landmark[1],2));
 			weight *= gaussian_norm * exp(exponent);
 		}
 		weights[i] = weight;
