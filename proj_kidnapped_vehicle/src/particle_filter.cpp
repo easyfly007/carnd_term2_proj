@@ -156,8 +156,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			
 			LandmarkObs obs;
 			obs.id = landmark_id;
-			obs.x = landmark_x - particle_x;
-			obs.y = landmark_y - particle_y;
+			obs.x = landmark_x;// - particle_x;
+			obs.y = landmark_y;// - particle_y;
 			predicted.push_back(obs);
 		}
 
@@ -170,9 +170,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			double car_coord_obs_y = observations[j].y;
 
 			double map_coord_obs_x = 
-				cos(particle_theta) * car_coord_obs_x - sin(particle_theta) * car_coord_obs_y;//  + particle_x;
+				cos(particle_theta) * car_coord_obs_x - sin(particle_theta) * car_coord_obs_y + particle_x;
 			double map_coord_obs_y = 
-				sin(particle_theta) * car_coord_obs_x + cos(particle_theta) * car_coord_obs_y;// + particle_y;
+				sin(particle_theta) * car_coord_obs_x + cos(particle_theta) * car_coord_obs_y + particle_y;
 			
 			LandmarkObs map_obs;
 			map_obs.x = map_coord_obs_x;
@@ -202,22 +202,13 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 			// get the matched landmark prediction
 			LandmarkObs matched_obs = predicted[matched_landmark_id];
-			// for (int k = 0; k < predicted.size(); k ++)
-			// {
-			// 	if (predicted[k].id == matched_landmark_id)
-			// 	{
-			// 		matched_obs = predicted[k];
-			// 		break;
-			// 	}
-			// }
-			
 
 			double map_coord_pred_x = matched_obs.x;
 			double map_coord_pred_y = matched_obs.y;
 
 			associations.push_back(matched_obs.id);
-			sense_x.push_back(matched_obs.x + particles[i].x);
-			sense_y.push_back(matched_obs.y + particles[i].y); 
+			sense_x.push_back(matched_obs.x);// + particles[i].x);
+			sense_y.push_back(matched_obs.y);// + particles[i].y); 
 
 			double gaussian_norm = 0.5 / (std_landmark[0] * std_landmark[1]);
 			double exponent = - pow((map_coord_obs_x - map_coord_pred_x),2) / (2 * pow(std_landmark[0],2)) 
