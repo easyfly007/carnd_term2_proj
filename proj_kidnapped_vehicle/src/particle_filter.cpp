@@ -117,7 +117,7 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 			if (min_distance < 0.0 || min_distance > distance)
 			{
 				min_distance = distance;
-				matched_landmark_id = predicted[j].id;
+				matched_landmark_id = j;
 			}
 		}
 		observations[i].id = matched_landmark_id;
@@ -201,21 +201,21 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			int matched_landmark_id = map_coord_observations[j].id;
 
 			// get the matched landmark prediction
-			LandmarkObs matched_obs;
-			for (int k = 0; k < predicted.size(); k ++)
-			{
-				if (predicted[k].id == matched_landmark_id)
-				{
-					matched_obs = predicted[k];
-					break;
-				}
-			}
+			LandmarkObs matched_obs = predicted[matched_landmark_id];
+			// for (int k = 0; k < predicted.size(); k ++)
+			// {
+			// 	if (predicted[k].id == matched_landmark_id)
+			// 	{
+			// 		matched_obs = predicted[k];
+			// 		break;
+			// 	}
+			// }
 			
 
 			double map_coord_pred_x = matched_obs.x;
 			double map_coord_pred_y = matched_obs.y;
 
-			associations.push_back(matched_landmark_id);
+			associations.push_back(matched_obs.id);
 			sense_x.push_back(matched_obs.x + particles[i].x);
 			sense_y.push_back(matched_obs.y + particles[i].y); 
 
