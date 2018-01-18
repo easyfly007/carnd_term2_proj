@@ -35,7 +35,7 @@ int main()
   PID pid;
   // pid.init(Kp, Ki, Kd);
   pid.Init(0.0, 0.0, 0.0);
-  pid.Init(1.0, 1.0, 1.0);
+  pid.Init(0.05, 0.01, 0.01);
   
   // TODO: Initialize the pid variable.
 
@@ -57,7 +57,7 @@ int main()
           double steer_value;
 
           pid.UpdateError(cte);
-          steer_value = pid.TotalError();
+          steer_value = pid.GetSteerValue();
           if (steer_value > 1)
             steer_value = 1.0;
           if (steer_value < -1.0)
