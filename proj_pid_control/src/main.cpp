@@ -35,7 +35,7 @@ int main()
   PID pid;
   // pid.init(Kp, Ki, Kd);
   pid.Init(0.0, 0.0, 0.0);
-  pid.Init(0.7, 0.0008, 0.002);
+  pid.Init(0.8, 0.0008, 0.002);
   
   // TODO: Initialize the pid variable.
 
@@ -60,7 +60,7 @@ int main()
           pid.UpdateError(cte, speed);
           steer_value = pid.GetSteerValue(speed);
           double angle_rad = deg2rad(angle);
-          steer_value -= angle_rad * 0.2;
+          steer_value -= angle_rad * 0.3;
           // if (cte > 0.0)
           // {
           //   if (angle > 0.0)
