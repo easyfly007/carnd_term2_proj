@@ -35,8 +35,9 @@ int main()
   PID pid;
   // pid.init(Kp, Ki, Kd);
   pid.Init(0.0, 0.0, 0.0);
-  pid.Init(0.8, 0.0008, 0.002);
-  
+  pid.Init(0.5, 0.002, 0.002);
+  pid.Init(0.5, 0.002, 0.005);
+  pid.Init(0.3, 0.005, 0.005);
   // TODO: Initialize the pid variable.
 
   h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
@@ -60,7 +61,11 @@ int main()
           pid.UpdateError(cte, speed);
           steer_value = pid.GetSteerValue(speed);
           double angle_rad = deg2rad(angle);
-          steer_value -= angle_rad * 0.3;
+          if ( (cte * angle_rad)> 0.0)
+            steer_value -= angle_rad * 0.1;
+          else
+            steer_value -= angle_rad * 0.1;
+
           // if (cte > 0.0)
           // {
           //   if (angle > 0.0)

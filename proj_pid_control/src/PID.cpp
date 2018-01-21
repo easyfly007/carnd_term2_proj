@@ -24,7 +24,7 @@ void PID::Init(double Kp2, double Ki2, double Kd2) {
 
 void PID::UpdateError(double cte, double speed) 
 {
-	total_error = total_error * 0.9 +  cte *speed;
+	total_error = total_error * 0.9 +  (cte + p_error) *speed / 2.0;
 	double last_cte = p_error;
 	p_error = cte;
 	i_error = total_error;
