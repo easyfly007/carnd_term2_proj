@@ -35,11 +35,16 @@ double PID::TotalError() {
 
 double PID::GetSteerValue(double speed)
 {
+	static double cte = 0.0;
+
 	double p_steer = - p_error * Kp / speed;
 	double i_steer = - i_error * Ki ;// / speed;
 	double d_steer = - d_error * Kd;
 	cout << "p_error=" << p_error << ", i_error=" << i_error << ", d_error=" << d_error << endl;
 	cout << "p_steer=" << p_steer << ", i_steer=" << i_steer << ", d_steer=" << d_steer << endl;
+	
+	
+	cte = p_error;
 	return p_steer + i_steer + d_steer;
 }
 
@@ -49,12 +54,12 @@ double PID::GetThrottleValue(double speed)
 	static double cte = 0.0;
 	double throttle = 0.1;
 
-	if (p_error > 1.0 && p_error > cte + 0.05)
-		throttle = 0.;
+	if (p_error > 1.0 && p_error > cte + 0.1)
+		throttle = -0.1;
 	else if (p_error > 1.2 && p_error > cte)
 		throttle = 0.0;
-	else if (p_error < -1.0 && p_error < cte - 0.05)
-		throttle = 0.;
+	else if (p_error < -1.0 && p_error < cte - 0.1)
+		throttle = -0.1;
 	else if (p_error < -1.2 && p_error < cte)
 		throttle = 0.0;
 
