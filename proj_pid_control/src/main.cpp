@@ -85,6 +85,9 @@ int main()
           if (steer_value < -1.0)
             steer_value = -1.0;
 
+          double throttle = 0.0;
+          throttle = pid.GetThrottleValue(speed);
+
           /*
           * TODO: Calcuate steering value here, remember the steering value is
           * [-1, 1].
@@ -98,8 +101,9 @@ int main()
           json msgJson;
           msgJson["steering_angle"] = steer_value;
           msgJson["throttle"] = 0.3;
+          msgJson["throttle"] = throttle;
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-          // std::cout << msg << std::endl;
+          std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }
       } else {

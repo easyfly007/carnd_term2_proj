@@ -48,6 +48,7 @@ public:
   double TotalError();
 
   double GetSteerValue(double speed);
+  double GetThrottleValue(double speed);
 
 };
 
