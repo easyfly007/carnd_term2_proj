@@ -39,6 +39,12 @@ double PID::GetSteerValue(double speed)
 
 	double p_steer = - p_error * Kp ;
 	double i_steer = - i_error * Ki ;// / speed;
+	if (p_error > 1.0 && p_error > cte + 0.1)
+		p_steer = p_steer + p_steer * (1 + (p_error - cte) * 10);
+	if (p_error < -1.0 && p_error < cte - 0.1)
+		p_steer = p_steer + p_steer * (1 + (cte - p_error) * 10);
+
+
 	double d_steer = - d_error * Kd;
 	cout << "p_error=" << p_error << ", i_error=" << i_error << ", d_error=" << d_error << endl;
 	cout << "p_steer=" << p_steer << ", i_steer=" << i_steer << ", d_steer=" << d_steer << endl;
