@@ -25,7 +25,7 @@ void PID::UpdateError(double cte, double speed)
 {
 	double last_cte = p_error;
 	p_error = cte;
-	i_error = i_error * 0.95 + (cte + last_cte) / 2.0;
+	i_error = i_error + (cte + last_cte) / 2.0;
 	d_error = (cte - last_cte);
 }
 
@@ -37,7 +37,7 @@ double PID::GetSteerValue(double speed)
 {
 	static double cte = 0.0;
 
-	double p_steer = - p_error * Kp / speed;
+	double p_steer = - p_error * Kp ;
 	double i_steer = - i_error * Ki ;// / speed;
 	double d_steer = - d_error * Kd;
 	cout << "p_error=" << p_error << ", i_error=" << i_error << ", d_error=" << d_error << endl;
