@@ -40,15 +40,14 @@ public:
   /*
   * Update the PID error variables given cross track error.
   */
-  void UpdateError(double cte, double speed);
+  void UpdateError(double cte);
 
   /*
   * Calculate the total PID error.
   */
   double TotalError();
 
-  double GetSteerValue(double speed);
-  double GetThrottleValue(double speed);
+  double GetSteerValue();
 
 };
 
