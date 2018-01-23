@@ -3,9 +3,9 @@
 ## project basic information
 
 this is the project code for Udacity CarND (nano degree) term2 PID control project.
-the purpose of the project is to provide an algorithm that result a proper steering and throttle value based on the received speed and cross ctrack error (cte).
+the purpose of the project is to provide an algorithm that result a proper steering value based on the received speed and cross ctrack error (cte).
 
-when the server code provided a proper throttle and steer value, the simulation car will response accordingly. (with some delay).
+when the server code provided a proper throttle, the simulation car will response accordingly. (with some delay).
 
 ## steering algorithm
 
@@ -17,7 +17,11 @@ the main algorithm is to use PID control, while:
 
 then we need to provide 3 hyper parameters for the control, Kp, Kd, Ki.
 
-the final steering value will be like  
+the final steering value will be like  below.
+here I suppose the Kp, Kd, Ki are all positive.
+if remove the '-' in the equation, the Ki, Kp, Kd should be negative value,
+but actually they are the same.
+
 ```
 steer_value = - P * Kp - D * Kd - I *Ki 
 ```
@@ -31,20 +35,40 @@ these 3 terms plays different rols in the control step.
 
 ## throttle algorithm
 
-* when throttle > 0.0, the car will try to speed up;
-* when throttle < 0.0, the car will do a break and then move backward.
-* when throttle = 0.0, the car will move slower and slower.
-
-in my observation, the car will loss speed when turn sround or driving on the uneven road.
-so in most of the condition, we should give the throttle a small positive value to make the car move ahead.
-
-in my code, I give 0.1 in most of the conditions.
-
-when in the car turn a round and attemp to dive out of the road, I may need a break to give more control in a short road distance.
+* I just give throttle 0.1 as constant value.
 
 ## hyper parameters and more tunning
 
-in my final solution, I use Kp, Ki, Kd = 0.1, 0.0003, 0.6.
-the difficult one is that the road after a bridge, the turn is ver sharp and may drive the car out of the road.
+in my final solution, I use Kp, Ki, Kd = 0.2, 0.0003, 0.7.
 
-I give a small tunning that in condition the car seems to drive out of the road, make the Kd large.
+how to get this result?
+
+*. firstly I will keep Ki, Kd as 0.0 and tune Kp.
+
+for Kp, it will try to rotate the car to the road center direction, 
+
+if I use one as large as 1, then it will somehow roate too much and will cross the road center.
+
+if I use one as smaller as 0.01, then in the road turning around condition, it will not provide enough steering and the car will run out of the road.
+
+this tells me that maybe a suitable Kp will be at 0.1 ~ 0.5 such level.
+
+*. then after set the Kp, I begin to tune Kd.
+
+I think Kd plays an important role which will try to make the car roate smooth,
+
+e.g., when Kp try to rotate the car from road side to road center, Kd will do a conpensation that make the roate not so much to avoid cross the road center.
+I find that a proper Kd will be like 0.7 is OK. (I tested several values)
+
+
+*. then comes the Ki.
+
+in the ideal condition, the car will follow the road center with Kp and Kd.
+(Kp make the car follow the line, Kd make the car smooth)
+but after a long time run on the straight road (like on the bridge), the car is not on the center of the road, it always has a ~ +0.3 offset.
+
+that is the systematic offset, so I add the Ki to remove it.
+I begin the Ki from a very small value, like 0.00001, and check if the offset is removed.
+if not, I will slightly increase it.
+
+finally I got the solution of Kp, Ki, Kd as  0.2, 0.0003, 0.7, by such PID controller, my car can perfectly run through!!
