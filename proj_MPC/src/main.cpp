@@ -100,7 +100,17 @@ int main() {
           */
           double steer_value;
           double throttle_value;
+          
+          if (throttle_value > 1.0)
+            throttle_value = 1.0;
+          else if (throttle_value < -1.0)
+            throttle_value = -1.0
 
+          if (steer_value > 1.0)
+            steer_value = 1.0;
+          else if (steer_value < -1.0)
+            steer_value = -1.0
+          
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
           // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
@@ -110,6 +120,7 @@ int main() {
           //Display the MPC predicted trajectory 
           vector<double> mpc_x_vals;
           vector<double> mpc_y_vals;
+
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
