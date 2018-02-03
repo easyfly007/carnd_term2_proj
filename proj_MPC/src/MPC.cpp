@@ -35,26 +35,43 @@ class FG_eval {
     // the Solver function below.
     fg[0] = 0;
     double ref_v = 2.0; // TODO set ref_v
+    ref_v = 20.0;
     for (int i = 0; i < N; i ++)
     {
-      fg[0] += CppAD::pow(vars[cte_start + i], 1);
-      fg[0] += CppAD::pow(vars[epsi_start + i], 1);
-      fg[0] += CppAD::pow(vars[v_start + i] - ref_v, 1);
+      fg[0] += CppAD::pow(vars[cte_start + i], 2);
+      fg[0] += CppAD::pow(vars[epsi_start + i], 2);
+      fg[0] += CppAD::pow(vars[v_start + i] - ref_v, 2);
     }
 
     // minimize the use of the actuator
-    for (int i = 0; i < N - 2; i ++)
+    for (int i = 0; i < N - 1; i ++)
     {
       fg[0] += CppAD::pow(vars[delta_start + i + 1] - vars[delta_start + i], 2);
       fg[0] += CppAD::pow(vars[a_start + i + 1] - vars[a_start + i], 2);
     }
 
-    fg[1 + x_start]    = vars[x_start];
-    fg[1 + y_start]    = vars[y_start];
-    fg[1 + psi_start]  = vars[psi_start];
-    fg[1 + v_start]    = vars[v_start];
-    fg[1 + cte_start]  = vars[cte_start];
-    fg[1 + epsi_start] = vars[epsi_start];
+    // add constrains
+    for (int i = 0; i < N - 1; i ++)
+    {
+      AD<double> x0 = vars[x_start + i];
+      AD<double> y0 = vars[y_start + i];
+      AD<double> v0 = vars[v_start + i];
+      AD<double> psi0 = vars[psi_start + i];
+      AD<double> delta0 = vars[delta_start + i];
+      AD<double> a0 = vars[a_start + i];
+
+      AD<double> x1 = vars[x_start + i + 1];
+      AD<double> y1 = vars[y_start + i + 1];
+      AD<double> v1 = vars[v_start + i + 1];
+      AD<double> psi1 = vars[psi_start + i + 1];
+      AD<double> delta1 = vars[delta_start + i + 1];
+      AD<double> a1 = vars[a_start + i + 1];
+
+      fg[x_start + i + 1]    = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
+      fg[y_start + i + 1]    = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
+      fg[psi_start + i + 1]  = psi1 - (psi0 + delta0 * dt);
+      fg[v_start + i + 1]    = v1 - (v0 + a0 * dt);
+    }
      
   }
 };
@@ -89,6 +106,9 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   
   // TODO: Set the number of constraints
   size_t n_constraints = 2;
+  n_constraints = (N -1) * state.size();
+  // include for each state, there's must N-1 constraints
+
   // delta lower and upepr limit
 
   size_t x_start     = 0;
@@ -98,7 +118,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   size_t cte_start   = 0 + N * 4;
   size_t epsi_start  = 0 + N * 5;
   size_t delta_start = 0 + N * 6;
-  size_t a_start     = 0 + N * 7 - 1; 
+  size_t a_start     = 0 + N * 7 - 1;
 
   // Initial value of the independent variables.
   // SHOULD BE 0 besides initial state.
@@ -119,6 +139,11 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   for (int i = delta_start; i < a_start; i++) {
     vars_lowerbound[i] = -0.436332;
     vars_upperbound[i] = 0.436332;
+  }
+  for (int i = a_start; i < n_vars; i ++)
+  {
+    vars_lowerbound[i] = -1.0;
+    vars_upperbound[i] = 1.0;
   }
   // TODO: Set lower and upper limits for variables.
 

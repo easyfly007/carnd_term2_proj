@@ -17,6 +17,8 @@ constexpr double pi() { return M_PI; }
 double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
 
+const int order = 3.0;
+
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
 // else the empty string "" will be returned.
@@ -87,10 +89,16 @@ int main() {
           // j[1] is the data JSON object
           vector<double> ptsx = j[1]["ptsx"];
           vector<double> ptsy = j[1]["ptsy"];
-          double px = j[1]["x"];
-          double py = j[1]["y"];
-          double psi = j[1]["psi"];
-          double v = j[1]["speed"];
+          // ptsx and ptsy are the reference points
+          Eigen::VectorXd coeffs = polyfit(ptsx, ptsy, order);
+
+          double px0  = j[1]["x"];
+          double py0  = j[1]["y"];
+          double psi0 = j[1]["psi"];
+          double v0   = j[1]["speed"];
+
+          double cte0  = py0 - ptsy[0];
+          double epsi0 = psi0 - arctan2(ptsy[1] - ptsy[0], ptsx[1] - ptsx[0]); 
 
           /*
           * TODO: Calculate steering angle and throttle using MPC.
