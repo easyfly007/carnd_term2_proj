@@ -89,16 +89,18 @@ int main() {
           // j[1] is the data JSON object
           vector<double> ptsx = j[1]["ptsx"];
           vector<double> ptsy = j[1]["ptsy"];
-          // ptsx and ptsy are the reference points
+          // ptsx and ptsy are the reference points as golden
+
           Eigen::VectorXd coeffs = polyfit(ptsx, ptsy, order);
 
+          // the initial value
           double px0  = j[1]["x"];
           double py0  = j[1]["y"];
           double psi0 = j[1]["psi"];
           double v0   = j[1]["speed"];
 
-          double cte0  = py0 - ptsy[0];
-          double epsi0 = psi0 - arctan2(ptsy[1] - ptsy[0], ptsx[1] - ptsx[0]); 
+          double cte0  = polyeval(coeffs, 0.0) -  py0;
+          double epsi0 = psi0 - arctan((ptsy[1] - ptsy[0]) / (ptsx[1] - ptsx[0])); 
 
           /*
           * TODO: Calculate steering angle and throttle using MPC.
@@ -106,6 +108,8 @@ int main() {
           * Both are in between [-1, 1].
           *
           */
+          mpc.Solve();
+          
           double steer_value;
           double throttle_value;
           

@@ -34,8 +34,7 @@ class FG_eval {
     // NOTE: You'll probably go back and forth between this function and
     // the Solver function below.
     fg[0] = 0;
-    double ref_v = 2.0; // TODO set ref_v
-    ref_v = 20.0;
+    AD<double> ref_v = 20.0;
     for (int i = 0; i < N; i ++)
     {
       fg[0] += CppAD::pow(vars[cte_start + i], 2);
@@ -43,34 +42,53 @@ class FG_eval {
       fg[0] += CppAD::pow(vars[v_start + i] - ref_v, 2);
     }
 
-    // minimize the use of the actuator
+    // minimize the use of the actuator, make the controller more smooth
     for (int i = 0; i < N - 1; i ++)
     {
       fg[0] += CppAD::pow(vars[delta_start + i + 1] - vars[delta_start + i], 2);
       fg[0] += CppAD::pow(vars[a_start + i + 1] - vars[a_start + i], 2);
     }
 
+    // initializations, for the start time point state
+    fg[x_start + 1]    = vars[x_start];
+    fg[y_start + 1]    = vars[y_start];
+    fg[psi_start + 1]  = vars[psi_start];
+    fg[v_start + 1]    = vars[v_start];
+    fg[cte_start + 1]  = vars[cte_start];
+    fg[epsi_start + 1] = vars[epsi_start];
+
+
     // add constrains
     for (int i = 0; i < N - 1; i ++)
     {
-      AD<double> x0 = vars[x_start + i];
-      AD<double> y0 = vars[y_start + i];
-      AD<double> v0 = vars[v_start + i];
-      AD<double> psi0 = vars[psi_start + i];
-      AD<double> delta0 = vars[delta_start + i];
-      AD<double> a0 = vars[a_start + i];
+      AD<double> x0    = vars[x_start + i];
+      AD<double> y0    = vars[y_start + i];
+      AD<double> v0    = vars[v_start + i];
+      AD<double> psi0  = vars[psi_start + i];
+      AD<double> cte0  = vars[cte_start + i];
+      AD<double> epsi0 = vars[epsi_start + i];
 
-      AD<double> x1 = vars[x_start + i + 1];
-      AD<double> y1 = vars[y_start + i + 1];
-      AD<double> v1 = vars[v_start + i + 1];
-      AD<double> psi1 = vars[psi_start + i + 1];
+      AD<double> delta0 = vars[delta_start + i];
+      AD<double> a0     = vars[a_start + i];
+
+      AD<double> x1    = vars[x_start + i + 1];
+      AD<double> y1    = vars[y_start + i + 1];
+      AD<double> v1    = vars[v_start + i + 1];
+      AD<double> psi1  = vars[psi_start + i + 1];
+      AD<double> cte1  = vars[cte_start + i + 1];
+      AD<double> epsi1 = vars[epsi_start + i + 1];
+
       AD<double> delta1 = vars[delta_start + i + 1];
       AD<double> a1 = vars[a_start + i + 1];
+      
+      AD<double> f0 = coeffs[0] + coeffs[1] * x0;
+      AD<double> psides0 = CppAD::atan(coeffs[1]);
 
       fg[x_start + i + 1]    = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
       fg[y_start + i + 1]    = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
       fg[psi_start + i + 1]  = psi1 - (psi0 + delta0 * dt);
       fg[v_start + i + 1]    = v1 - (v0 + a0 * dt);
+      fg[cte_start + i + 1]  = cte1 
     }
      
   }
@@ -197,5 +215,9 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   //
   // {...} is shorthand for creating a vector, so auto x1 = {1.0,2.0}
   // creates a 2 element double vector.
-  return {};
+  double<vector> first_actuator;
+  first_actuator.push_back(solution.x[0]);
+  first_actuator.push_back(solution.x[1]);
+  return first_actuator;
+  // return {};
 }
