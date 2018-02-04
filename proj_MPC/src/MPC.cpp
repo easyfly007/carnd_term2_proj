@@ -9,6 +9,7 @@ using CppAD::AD;
 size_t N = 25;
 double dt = 0.05;
 
+const bool verbose = true;
 // This value assumes the model presented in the classroom is used.
 //
 // It was obtained by measuring the radius formed by running the vehicle in the
@@ -33,6 +34,15 @@ class FG_eval {
     // `fg` a vector of the cost constraints, `vars` is a vector of variable values (state & actuators)
     // NOTE: You'll probably go back and forth between this function and
     // the Solver function below.
+    size_t x_start     = 0;
+  	size_t y_start     = 0 + N;
+  	size_t psi_start   = 0 + N * 2;
+  	size_t v_start     = 0 + N * 3;
+	size_t cte_start   = 0 + N * 4;
+  	size_t epsi_start  = 0 + N * 5;
+  	size_t delta_start = 0 + N * 6;
+  	size_t a_start     = 0 + N * 7 - 1;
+
     fg[0] = 0;
     AD<double> ref_v = 20.0;
     for (int i = 0; i < N; i ++)
@@ -88,7 +98,7 @@ class FG_eval {
       fg[y_start + i + 1]    = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
       fg[psi_start + i + 1]  = psi1 - (psi0 + delta0 * dt);
       fg[v_start + i + 1]    = v1 - (v0 + a0 * dt);
-      fg[cte_start + i + 1]  = cte1 
+      fg[cte_start + i + 1]  = cte1;
     }
      
   }
@@ -215,7 +225,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   //
   // {...} is shorthand for creating a vector, so auto x1 = {1.0,2.0}
   // creates a 2 element double vector.
-  double<vector> first_actuator;
+  vector<double> first_actuator;
   first_actuator.push_back(solution.x[0]);
   first_actuator.push_back(solution.x[1]);
   return first_actuator;

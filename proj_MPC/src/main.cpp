@@ -91,8 +91,9 @@ int main() {
           vector<double> ptsy = j[1]["ptsy"];
           // ptsx and ptsy are the reference points as golden
 
-          Eigen::VectorXd coeffs = polyfit(ptsx, ptsy, order);
-
+          // Eigen::VectorXd coeffs = polyfit(ptsx, ptsy, order);
+          Eigen::VectorXd coeffs;
+          
           // the initial value
           double px0  = j[1]["x"];
           double py0  = j[1]["y"];
@@ -100,15 +101,15 @@ int main() {
           double v0   = j[1]["speed"];
 
           double cte0  = polyeval(coeffs, 0.0) -  py0;
-          double epsi0 = psi0 - arctan((ptsy[1] - ptsy[0]) / (ptsx[1] - ptsx[0])); 
-
+          // double epsi0 = psi0 - arctan((ptsy[1] - ptsy[0]) / (ptsx[1] - ptsx[0])); 
+          double epsi0;
           /*
           * TODO: Calculate steering angle and throttle using MPC.
           *
           * Both are in between [-1, 1].
           *
           */
-          mpc.Solve();
+          // mpc.Solve();
           
           double steer_value;
           double throttle_value;
@@ -116,12 +117,12 @@ int main() {
           if (throttle_value > 1.0)
             throttle_value = 1.0;
           else if (throttle_value < -1.0)
-            throttle_value = -1.0
+            throttle_value = -1.0;
 
           if (steer_value > 1.0)
             steer_value = 1.0;
           else if (steer_value < -1.0)
-            steer_value = -1.0
+            steer_value = -1.0;
           
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
