@@ -1,6 +1,7 @@
 #ifndef MPC_H
 #define MPC_H
 
+#include <iostream>
 #include <vector>
 #include "Eigen-3.3/Eigen/Core"
 

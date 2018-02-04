@@ -11,6 +11,8 @@
 
 // for convenience
 using json = nlohmann::json;
+using namespace std;
+
 
 // For converting back and forth between radians and degrees.
 constexpr double pi() { return M_PI; }
@@ -18,7 +20,7 @@ double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
 
 const int order = 3.0;
-
+const bool verbose = true;
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
 // else the empty string "" will be returned.
@@ -90,19 +92,50 @@ int main() {
           vector<double> ptsx = j[1]["ptsx"];
           vector<double> ptsy = j[1]["ptsy"];
           // ptsx and ptsy are the reference points as golden
-
-          // Eigen::VectorXd coeffs = polyfit(ptsx, ptsy, order);
-          Eigen::VectorXd coeffs;
+          if (verbose)
+          {
+          	assert(ptsx.size() == ptsy.size());
+          	cout << endl << "ptsx size = " << ptsx.size() << endl;
+          	for (size_t i = 0; i < ptsx.size(); i ++)
+          		cout << "(" << ptsx[i] << ", " << ptsy[i] << ")";
+          	cout << endl;
+          }
           
-          // the initial value
+          Eigen::VectorXd ref_x(ptsx.size());
+          Eigen::VectorXd ref_y(ptsy.size());
+          for (size_t i = 0; i < ptsx.size(); i ++)
+          {
+          	ref_x(i) = ptsx[i];
+          	ref_y(i) = ptsy[i];
+          }
+          Eigen::VectorXd coeffs = polyfit(ref_x, ref_y, order);
+          if (verbose)
+          {
+          	cout << "coeff size = " << coeffs.size()<< endl;
+          	for (int i = 0; i < coeffs.size(); i ++ )
+          		cout << coeffs(i);
+          	cout << endl;
+          }
+
+          // the initial value, e.g., the current state of the car
           double px0  = j[1]["x"];
           double py0  = j[1]["y"];
           double psi0 = j[1]["psi"];
           double v0   = j[1]["speed"];
+          double cte0  = py0 - polyeval(coeffs, 0.0);
+          double epsi0 = atan(psi0 - coeffs[1]);
+          // the ref epsi is coeffs[1], as the dy/dx @x=0 is coeffs[1], y = coeffs[0] + coeffs[1] * x + coeffs[2] * x*x + ... 
+          if (verbose)
+          {
+          	cout << " the initial read in state: "<< endl;
+          	cout << " px0=" << px0 << ", py0=" << py0 
+          		 << ", psi0=" << psi0 << ", v0=" << v0 
+          		 << ", cte0=" << cte0 << ", epsi0=" << epsi0 << endl;
+          }
+          Eigen::VectorXd state(6);
+          state << px0, py0, psi0, v0, cte0,epsi0;
+          vector<double> result = mpc.Solve(state, coeffs);
 
-          double cte0  = polyeval(coeffs, 0.0) -  py0;
-          // double epsi0 = psi0 - arctan((ptsy[1] - ptsy[0]) / (ptsx[1] - ptsx[0])); 
-          double epsi0;
           /*
           * TODO: Calculate steering angle and throttle using MPC.
           *
@@ -111,8 +144,8 @@ int main() {
           */
           // mpc.Solve();
           
-          double steer_value;
-          double throttle_value;
+          double steer_value = result[0];
+          double throttle_value = result[1];
           
           if (throttle_value > 1.0)
             throttle_value = 1.0;
