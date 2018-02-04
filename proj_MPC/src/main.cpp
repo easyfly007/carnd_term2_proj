@@ -166,7 +166,11 @@ int main() {
           //Display the MPC predicted trajectory 
           vector<double> mpc_x_vals;
           vector<double> mpc_y_vals;
-
+          for (size_t i = 1; i < result.size() / 2; i ++)
+          {
+          	mpc_x_vals.push_back(result[ i *2]);
+          	mpc_y_vals.push_back(result[ i *2 +1]);
+          }
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
@@ -177,6 +181,13 @@ int main() {
           //Display the waypoints/reference line
           vector<double> next_x_vals;
           vector<double> next_y_vals;
+          for (size_t i = 1; i < result.size() / 2; i ++)
+          {
+          	double next_x = result[i *2];
+          	double next_y = polyeval(coeffs, next_x);
+          	next_x_vals.push_back(next_x);
+          	next_y_vals.push_back(next_y);
+          }
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Yellow line
