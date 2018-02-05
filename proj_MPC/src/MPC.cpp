@@ -114,12 +114,12 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   if (verbose)
     cout << "the state size = " << state.size() << endl;
   
-  double x    = state[0];
-  double y    = state[1];
-  double psi  = state[2];
-  double v    = state[3];
-  double cte  = state[4];
-  double epsi = state[5];
+  double x0    = state[0];
+  double y0    = state[1];
+  double psi0  = state[2];
+  double v0    = state[3];
+  double cte0  = state[4];
+  double epsi0 = state[5];
 
   bool ok = true;
   size_t i;
@@ -133,8 +133,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   size_t n_vars = state.size() * N + 2 * (N - 1);
   
   // TODO: Set the number of constraints
-  size_t n_constraints = 2;
-  n_constraints = (N -1) * state.size();
+  size_t n_constraints = N * state.size();
   // include for each state, there's must N-1 constraints
 
   // delta lower and upepr limit
@@ -154,16 +153,21 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   for (int i = 0; i < n_vars; i++) {
     vars[i] = 0;
   }
-  vars[x_start] = x;
-  vars[y_start] = y;
-  vars[psi_start] = psi;
-  vars[v_start] = v;
-  vars[cte_start] = cte;
-  vars[psi_start] = psi;
+  vars[x_start] = x0;
+  vars[y_start] = y0;
+  vars[psi_start] = psi0;
+  vars[v_start] = v0;
+  vars[cte_start] = cte0;
+  vars[psi_start] = psi0;
 
 
   Dvector vars_lowerbound(n_vars);
   Dvector vars_upperbound(n_vars);
+  for (int i = 0; i < n_vars; i ++)
+  {
+  	vars_lowerbound[i] = -1.0e20;
+  	vars_upperbound[i] = +1.0e20;
+  }
   for (int i = delta_start; i < a_start; i++) {
     vars_lowerbound[i] = -0.436332;
     vars_upperbound[i] = 0.436332;
