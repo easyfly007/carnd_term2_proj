@@ -134,7 +134,7 @@ int main() {
           }
           Eigen::VectorXd state(6);
           state << px0, py0, psi0, v0, cte0,epsi0;
-          vector<double> result = mpc.Solve(state, coeffs);
+          auto result = mpc.Solve(state, coeffs);
 
           /*
           * TODO: Calculate steering angle and throttle using MPC.
