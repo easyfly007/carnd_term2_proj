@@ -182,12 +182,12 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   for (size_t i = 0; i < n_vars; i++) {
     vars[i] = 0.0;
   }
-  vars[x_start] = x0;
-  vars[y_start] = y0;
-  vars[psi_start] = psi0;
-  vars[v_start]   = v0;
-  vars[cte_start] = cte0;
-  vars[psi_start] = psi0;
+  vars[x_start]    = x0;
+  vars[y_start]    = y0;
+  vars[psi_start]  = psi0;
+  vars[v_start]    = v0;
+  vars[cte_start]  = cte0;
+  vars[epsi_start] = epsi0;
 
 
   Dvector vars_lowerbound(n_vars);
@@ -221,10 +221,10 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   constraints_upperbound[x_start] = x0;
   constraints_lowerbound[y_start] = y0;
   constraints_upperbound[y_start] = y0;
-  constraints_lowerbound[v_start] = v0;
-  constraints_upperbound[v_start] = v0;
   constraints_lowerbound[psi_start] = psi0;
   constraints_upperbound[psi_start] = psi0;
+  constraints_lowerbound[v_start] = v0;
+  constraints_upperbound[v_start] = v0;
   constraints_lowerbound[cte_start] = cte0;
   constraints_upperbound[cte_start] = cte0;
   constraints_lowerbound[epsi_start] = epsi0;
