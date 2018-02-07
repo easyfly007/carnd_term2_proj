@@ -32,7 +32,10 @@ class FG_eval {
   typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
   void operator()(ADvector& fg, const ADvector& vars) {
   	if (verbose)
+  	{
   		cout << "begin FG_eval operator()" << endl;
+  		cout << "  vars size = " << vars.size() << ", N=" << N << endl;
+  	}
     // TODO: implement MPC
     // `fg` a vector of the cost constraints, `vars` is a vector of variable values (state & actuators)
     // NOTE: You'll probably go back and forth between this function and
@@ -46,6 +49,8 @@ class FG_eval {
   	size_t delta_start = 0 + N * 6;
   	size_t a_start     = 0 + N * 7 - 1;
 
+  	if (verbose)
+  		cout << "  operator() step 1" << endl;
     fg[0] = 0;
     AD<double> ref_v = 20.0;
     for (size_t i = 0; i < N; i ++)
@@ -54,19 +59,24 @@ class FG_eval {
       fg[0] += CppAD::pow(vars[epsi_start + i], 2);
       fg[0] += CppAD::pow(vars[v_start + i] - ref_v, 2);
     }
+      if (verbose)
+  		cout << "  operator() step 2" << endl;
 
     // minimize the use of the actuator, and make the controller more smooth
     for (size_t i = 0; i < N - 1; i ++)
     {
-      fg[0] += CppAD::pow(vars[delta_start + i + 1], 2);
-      fg[0] += CppAD::pow(vars[a_start + i + 1], 2);
+      fg[0] += CppAD::pow(vars[delta_start + i], 2);
+      fg[0] += CppAD::pow(vars[a_start + i], 2);
     }
+	if (verbose)
+  		cout << "  operator() step 2.5 " << endl;    
     for (size_t i = 0; i < N - 2; i ++)
     {
       fg[0] += CppAD::pow(vars[delta_start + i + 1] - vars[delta_start + i], 2);
       fg[0] += CppAD::pow(vars[a_start + i + 1] - vars[a_start + i], 2);
     }
-
+  	if (verbose)
+  		cout << "  operator() step 3" << endl;
     // initializations, for the start time point state
     fg[x_start + 1]    = vars[x_start];
     fg[y_start + 1]    = vars[y_start];
@@ -75,10 +85,16 @@ class FG_eval {
     fg[cte_start + 1]  = vars[cte_start];
     fg[epsi_start + 1] = vars[epsi_start];
 
-
+  	if (verbose)
+  		cout << "  operator() step 4" << endl;
     // add constrains
     for (size_t i = 0; i < N - 1; i ++)
     {
+      if (verbose)
+      {
+  		cout << "  operator() step 5" << endl;
+        cout << "    i = " << i << endl;    	
+      }
       AD<double> x0    = vars[x_start + i];
       AD<double> y0    = vars[y_start + i];
       AD<double> v0    = vars[v_start + i];
@@ -96,9 +112,6 @@ class FG_eval {
       AD<double> cte1  = vars[cte_start + i + 1];
       AD<double> epsi1 = vars[epsi_start + i + 1];
 
-      AD<double> delta1 = vars[delta_start + i + 1];
-      AD<double> a1 = vars[a_start + i + 1];
-      
       // the y0 refrence and psi0 reference
       // AD<double> f0 = polyeval(coeffs, x0);
       AD<double> f0 = coeffs[0] + coeffs[1] * x0;
@@ -112,7 +125,8 @@ class FG_eval {
       fg[cte_start + i + 1]  = cte1 - (y0 - f0 + CppAD::sin(psi0) * dt);
       fg[epsi_start + i + 1] = epsi1 - (psi0 - psides0 + v0 * delta0 * dt / Lf);
     }
-     
+  	if (verbose)
+  	  cout << "end FG_eval operator()" << endl;
   }
 };
 
@@ -124,7 +138,10 @@ MPC::~MPC() {}
 
 vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   if (verbose)
+  {
+  	cout << "begin MPC::Solve()" << endl;
     cout << "the state size = " << state.size() << endl;
+  }
   assert(state.size() == 6);
   double x0    = state[0];
   double y0    = state[1];
