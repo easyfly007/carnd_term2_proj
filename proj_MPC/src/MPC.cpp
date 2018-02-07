@@ -21,6 +21,7 @@ const bool verbose = true;
 //
 // This is the length from front to CoG that has a similar radius.
 const double Lf = 2.67;
+// extern double polyeval(Eigen::VectorXd coeffs, double x); 
 
 class FG_eval {
  public:
@@ -54,8 +55,13 @@ class FG_eval {
       fg[0] += CppAD::pow(vars[v_start + i] - ref_v, 2);
     }
 
-    // minimize the use of the actuator, make the controller more smooth
+    // minimize the use of the actuator, and make the controller more smooth
     for (size_t i = 0; i < N - 1; i ++)
+    {
+      fg[0] += CppAD::pow(vars[delta_start + i + 1], 2);
+      fg[0] += CppAD::pow(vars[a_start + i + 1], 2);
+    }
+    for (size_t i = 0; i < N - 2; i ++)
     {
       fg[0] += CppAD::pow(vars[delta_start + i + 1] - vars[delta_start + i], 2);
       fg[0] += CppAD::pow(vars[a_start + i + 1] - vars[a_start + i], 2);
@@ -94,6 +100,7 @@ class FG_eval {
       AD<double> a1 = vars[a_start + i + 1];
       
       // the y0 refrence and psi0 reference
+      // AD<double> f0 = polyeval(coeffs, x0);
       AD<double> f0 = coeffs[0] + coeffs[1] * x0;
       AD<double> psides0 = CppAD::atan(coeffs[1]);
 
@@ -134,6 +141,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   // element vector and there are 10 timesteps. The number of variables is:
   //
   // 4 * 10 + 2 * 9
+  assert(state.size() == 6);
   size_t n_vars = state.size() * N + 2 * (N - 1);
   
   // TODO: Set the number of constraints
@@ -160,8 +168,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   vars[x_start] = x0;
   vars[y_start] = y0;
   vars[psi_start] = psi0;
-  vars[v_start]   
-  = v0;
+  vars[v_start]   = v0;
   vars[cte_start] = cte0;
   vars[psi_start] = psi0;
 
