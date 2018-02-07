@@ -19,6 +19,17 @@ constexpr double pi() { return M_PI; }
 double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
 
+size_t N = 25;
+size_t x_start     = 0;
+size_t y_start     = 0 + N;
+size_t psi_start   = 0 + N * 2;
+size_t v_start     = 0 + N * 3;
+size_t cte_start   = 0 + N * 4;
+size_t epsi_start  = 0 + N * 5;
+size_t delta_start = 0 + N * 6;
+size_t a_start     = 0 + N * 7 - 1;
+
+
 const int order = 3.0;
 const bool verbose = true;
 // Checks if the SocketIO event has JSON data.
@@ -81,6 +92,7 @@ int main() {
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
     string sdata = string(data).substr(0, length);
+    cout << endl;
     cout << sdata << endl;
     if (sdata.size() > 2 && sdata[0] == '4' && sdata[1] == '2') {
       string s = hasData(sdata);
@@ -135,7 +147,8 @@ int main() {
           Eigen::VectorXd state(6);
           state << px0, py0, psi0, v0, cte0,epsi0;
           auto result = mpc.Solve(state, coeffs);
-
+		  if (verbose)
+            cout << "Solve result size = " << result.size() << endl;
           /*
           * TODO: Calculate steering angle and throttle using MPC.
           *
@@ -144,8 +157,8 @@ int main() {
           */
           // x, y, psi, v, cte, epsi, delta, a
           // 0  1  2    3  4    5     6      7
-          double steer_value = result[6];
-          double throttle_value = result[7];
+          double steer_value = result[delta_start + 1];
+          double throttle_value = result[a_start + 1];
           
           if (throttle_value > 1.0)
             throttle_value = 1.0;
@@ -166,6 +179,17 @@ int main() {
           //Display the MPC predicted trajectory 
           vector<double> mpc_x_vals = {result[0]};
           vector<double> mpc_y_vals = {result[1]};
+          if (verbose)
+          {
+          	cout << " the size for mpc_x_vals = " << mpc_x_vals.size() << endl;
+          	for (size_t i = 0; i < mpc_x_vals.size(); i ++)
+          	    cout << "  " << mpc_x_vals[i];
+          	cout << endl;
+          	cout << " the size for mpc_y_vals = " << mpc_y_vals.size() << endl;
+          	for (size_t i = 0; i < mpc_y_vals.size(); i ++ )
+          		cout << "  " << mpc_y_vals[i];
+          	cout << endl;
+          }
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
@@ -176,6 +200,17 @@ int main() {
           //Display the waypoints/reference line
           vector<double> next_x_vals = ptsx;
           vector<double> next_y_vals = ptsy;
+          if (verbose)
+          {
+          	cout << "the size for next_x_vals = " << next_x_vals.size() << endl;
+          	for (size_t i = 0; i < next_x_vals.size(); i ++ )
+          	    cout << " " << next_x_vals[i];
+          	cout << endl;
+          	cout << "the size for next_y_vals = " << next_y_vals.size() << endl;
+          	for (size_t i =0; i < next_y_vals.size(); i ++)
+	          	cout << " " << next_y_vals[i];
+	        cout << endl;
+          }
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Yellow line
