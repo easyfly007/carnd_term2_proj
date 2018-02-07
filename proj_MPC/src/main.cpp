@@ -142,9 +142,10 @@ int main() {
           * Both are in between [-1, 1].
           *
           */
-          
-          double steer_value = result[0];
-          double throttle_value = result[1];
+          // x, y, psi, v, cte, epsi, delta, a
+          // 0  1  2    3  4    5     6      7
+          double steer_value = result[6];
+          double throttle_value = result[7];
           
           if (throttle_value > 1.0)
             throttle_value = 1.0;
