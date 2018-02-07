@@ -19,7 +19,7 @@ constexpr double pi() { return M_PI; }
 double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
 
-size_t N = 25;
+extern size_t N;
 size_t x_start     = 0;
 size_t y_start     = 0 + N;
 size_t psi_start   = 0 + N * 2;
@@ -157,8 +157,8 @@ int main() {
           */
           // x, y, psi, v, cte, epsi, delta, a
           // 0  1  2    3  4    5     6      7
-          double steer_value = result[delta_start + 1];
-          double throttle_value = result[a_start + 1];
+          double steer_value = result[0];
+          double throttle_value = result[1];
           
           if (throttle_value > 1.0)
             throttle_value = 1.0;
@@ -176,10 +176,16 @@ int main() {
           msgJson["steering_angle"] = steer_value;
           msgJson["throttle"] = throttle_value;
 
+
           //Display the MPC predicted trajectory 
-          vector<double> mpc_x_vals = {result[0]};
-          vector<double> mpc_y_vals = {result[1]};
-          if (verbose)
+          vector<double> mpc_x_vals;
+          vector<double> mpc_y_vals;
+          for (size_t i = 0; i < 10; i ++)
+          {
+          	mpc_x_vals.push_back(result[2+ i *2]);
+          	mpc_y_vals.push_back(result[2+ i *2 +1]);
+          }
+                    if (verbose)
           {
           	cout << " the size for mpc_x_vals = " << mpc_x_vals.size() << endl;
           	for (size_t i = 0; i < mpc_x_vals.size(); i ++)
