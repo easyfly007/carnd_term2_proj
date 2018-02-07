@@ -30,6 +30,8 @@ class FG_eval {
 
   typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
   void operator()(ADvector& fg, const ADvector& vars) {
+  	if (verbose)
+  		cout << "begin FG_eval operator()" << endl;
     // TODO: implement MPC
     // `fg` a vector of the cost constraints, `vars` is a vector of variable values (state & actuators)
     // NOTE: You'll probably go back and forth between this function and
@@ -91,6 +93,7 @@ class FG_eval {
       AD<double> delta1 = vars[delta_start + i + 1];
       AD<double> a1 = vars[a_start + i + 1];
       
+      // the y0 refrence and psi0 reference
       AD<double> f0 = coeffs[0] + coeffs[1] * x0;
       AD<double> psides0 = CppAD::atan(coeffs[1]);
 
@@ -98,7 +101,9 @@ class FG_eval {
       fg[y_start + i + 1]    = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
       fg[psi_start + i + 1]  = psi1 - (psi0 + delta0 * dt);
       fg[v_start + i + 1]    = v1 - (v0 + a0 * dt);
-      fg[cte_start + i + 1]  = cte1;
+      // fg[cte_start + i + 1]  = cte1 - (f0 - y0 + CppAD::sin(psi0) * dt);
+      fg[cte_start + i + 1]  = cte1 - (y0 - f0 + CppAD::sin(psi0) * dt);
+      fg[epsi_start + i + 1] = epsi1 - (psi0 - psides0 + v0 * delta0 * dt / Lf);
     }
      
   }
@@ -113,7 +118,7 @@ MPC::~MPC() {}
 vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   if (verbose)
     cout << "the state size = " << state.size() << endl;
-  
+  assert(state.size() == 6);
   double x0    = state[0];
   double y0    = state[1];
   double psi0  = state[2];
@@ -155,7 +160,8 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   vars[x_start] = x0;
   vars[y_start] = y0;
   vars[psi_start] = psi0;
-  vars[v_start] = v0;
+  vars[v_start]   
+  = v0;
   vars[cte_start] = cte0;
   vars[psi_start] = psi0;
 
