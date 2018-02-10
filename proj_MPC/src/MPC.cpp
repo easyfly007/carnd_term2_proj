@@ -36,20 +36,20 @@ class FG_eval {
     // NOTE: You'll probably go back and forth between this function and
     // the Solver function below.
     size_t x_start     = 0;
-  	size_t y_start     = 0 + N;
-  	size_t psi_start   = 0 + N * 2;
-  	size_t v_start     = 0 + N * 3;
-	size_t cte_start   = 0 + N * 4;
-  	size_t epsi_start  = 0 + N * 5;
-  	size_t delta_start = 0 + N * 6;
-  	size_t a_start     = 0 + N * 7 - 1;
+    size_t y_start     = 0 + N;
+    size_t psi_start   = 0 + N * 2;
+    size_t v_start     = 0 + N * 3;
+    size_t cte_start   = 0 + N * 4;
+    size_t epsi_start  = 0 + N * 5;
+    size_t delta_start = 0 + N * 6;
+    size_t a_start     = 0 + N * 7 - 1;
 
     fg[0] = 0;
     AD<double> ref_v = 20.0;
     for (size_t i = 0; i < N; i ++)
     {
-      fg[0] += CppAD::pow(vars[cte_start + i], 2);
-      fg[0] += CppAD::pow(vars[epsi_start + i], 2);
+      fg[0] += 100 * CppAD::pow(vars[cte_start + i], 2);
+      fg[0] += 100 * CppAD::pow(vars[epsi_start + i], 2);
       fg[0] += CppAD::pow(vars[v_start + i] - ref_v, 2);
     }
 
@@ -94,13 +94,14 @@ class FG_eval {
 
       // the y0 refrence and psi0 reference
       // AD<double> f0 = polyeval(coeffs, x0);
-      AD<double> f0 = coeffs[0] + coeffs[1] * x0;
-      AD<double> psides0 = CppAD::atan(coeffs[1]);
+      AD<double> f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * CppAD::pow(x0, 2) + coeffs[3] * CppAD::pow(x0, 3);
+      AD<double> psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * x0 * x0 ]);
 
       fg[x_start + i + 1]    = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
       fg[y_start + i + 1]    = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
-      fg[psi_start + i + 1]  = psi1 - (psi0 + delta0 * dt);
-      fg[v_start + i + 1]    = v1 - (v0 + a0 * dt);
+      // fg[psi_start + i + 1]  = psi1 - (psi0 + delta0 * dt);
+      fg[psi_start + i + 1]  = psi1 - (psi0 - delta0 * dt);
+      fg[v_start + i + 1]    = v1 - (v0 + a0 * dt);// ??
       // fg[cte_start + i + 1]  = cte1 - (f0 - y0 + CppAD::sin(psi0) * dt);
       fg[cte_start + i + 1]  = cte1 - (y0 - f0 + CppAD::sin(psi0) * dt);
       fg[epsi_start + i + 1] = epsi1 - (psi0 - psides0 + v0 * delta0 * dt / Lf);
