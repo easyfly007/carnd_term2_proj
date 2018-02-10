@@ -132,8 +132,8 @@ int main() {
           double carcoord_py0 = 0.0; 
           double carcoord_psi0 = 0.0;
           double carcoord_v0 = mapcoord_v0;
-          double carcoord_cte0  = polyeval(coeffs, carcoord_px0) - carcoord_py0;
-          double carcoord_epsi0 = carcoord_psi0- atan(coeffs[1]) ;
+          double carcoord_cte0  = carcoord_py0 - polyeval(coeffs, carcoord_px0); //  - carcoord_py0;
+          double carcoord_epsi0 = atan(coeffs[1]) ;
           // now px0, py0, psi0, v0, cte0, epsi0 are the initial state and at car coordinate 
           if (verbose)
           {
@@ -173,7 +173,10 @@ int main() {
           */
           // x, y, psi, v, cte, epsi, delta, a
           // 0  1  2    3  4    5     6      7
-          double steer_value = result[0];
+          double steer_value = result[0] * (-1);
+          // as in the simulator, turn left means negative steering value, turn right means positive steering value
+          // in the car coordinate, turn left means positive value, turn right means negative value,
+          // 
           double throttle_value = result[1];
           
           if (throttle_value > 1.0)

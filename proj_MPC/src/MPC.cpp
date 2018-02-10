@@ -105,11 +105,11 @@ class FG_eval {
       fg[x_start + i + 1]    = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
       fg[y_start + i + 1]    = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
       // fg[psi_start + i + 1]  = psi1 - (psi0 + delta0 * dt);
-      fg[psi_start + i + 1]  = psi1 - (psi0 - delta0 * dt);
-      fg[v_start + i + 1]    = v1 - (v0 + a0 * dt);// ??
-      fg[cte_start + i + 1]  = cte1 - (f0 - y0 + CppAD::sin(psi0) * dt);
-      // fg[cte_start + i + 1]  = cte1 - (y0 - f0 + CppAD::sin(psi0) * dt);
-      fg[epsi_start + i + 1] = epsi1 - (psi0 - psides0 - v0 * delta0 * dt / Lf);
+      fg[psi_start + i + 1]  = psi1 - (psi0 + delta0 * dt * v0 / Lf);
+      fg[v_start + i + 1]    = v1 - (v0 + a0 * dt);
+      // fg[cte_start + i + 1]  = cte1 - (f0 - y0 + CppAD::sin(psi0) * dt);
+      fg[cte_start + i + 1]  = cte1 - (y0 - f0 + CppAD::sin(psi0) * dt);
+      fg[epsi_start + i + 1] = epsi1 - (psi0 - psides0 + v0 * delta0 * dt / Lf);
     }
   }
 };
