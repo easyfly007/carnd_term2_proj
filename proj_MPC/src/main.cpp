@@ -92,8 +92,8 @@ int main() {
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
     string sdata = string(data).substr(0, length);
-    cout << endl;
-    cout << sdata << endl;
+    cout << endl << endl;
+    cout << "onMessage: " << sdata << endl;
     if (sdata.size() > 2 && sdata[0] == '4' && sdata[1] == '2') {
       string s = hasData(sdata);
       if (s != "") {
@@ -103,51 +103,49 @@ int main() {
           // j[1] is the data JSON object
           vector<double> ptsx = j[1]["ptsx"];
           vector<double> ptsy = j[1]["ptsy"];
-          // ptsx and ptsy are the reference points as golden
-          if (verbose)
-          {
-          	assert(ptsx.size() == ptsy.size());
-          	cout << endl << "ptsx size = " << ptsx.size() << endl;
-          	for (size_t i = 0; i < ptsx.size(); i ++)
-          		cout << "(" << ptsx[i] << ", " << ptsy[i] << ")";
-          	cout << endl;
-          }
-          
-          Eigen::VectorXd ref_x(ptsx.size());
-          Eigen::VectorXd ref_y(ptsy.size());
-          for (size_t i = 0; i < ptsx.size(); i ++)
-          {
-          	ref_x(i) = ptsx[i];
-          	ref_y(i) = ptsy[i];
-          }
-          Eigen::VectorXd coeffs = polyfit(ref_x, ref_y, order);
-          if (verbose)
-          {
-          	cout << "coeff size = " << coeffs.size()<< endl;
-          	for (int i = 0; i < coeffs.size(); i ++ )
-          		cout << coeffs(i);
-          	cout << endl;
-          }
 
           // the initial value, e.g., the current state of the car
-          double px0  = j[1]["x"];
-          double py0  = j[1]["y"];
-          double psi0 = j[1]["psi"];
-          double v0   = j[1]["speed"];
-          double cte0  = py0 - polyeval(coeffs, 0.0);
-          double epsi0 = atan(psi0 - coeffs[1]);
-          // the ref epsi is coeffs[1], as the dy/dx @x=0 is coeffs[1], y = coeffs[0] + coeffs[1] * x + coeffs[2] * x*x + ... 
+          double mapcoord_px0  = j[1]["x"];
+          double mapcoord_py0  = j[1]["y"];
+          double mapcoord_psi0 = j[1]["psi"];
+          double mapcoord_v0   = j[1]["speed"];
+
+
+          // note that ptsx and ptsy are from map coordinate, 
+          // we need to transfer it into car coordinate for future MPC implementation
+          Eigen::VectorXd carcoord_ptsx(ptsx.size());
+          Eigen::VectorXd carcoord_ptsy(ptsy.size());
+          for (size_t i = 0; i < ptsx.size(); i ++)
+          {
+            double mapcoord_ptx = ptsx[i];
+            double mapcoord_pty = ptsy[i];
+            double carcoord_x = cos(mapcoord_psi0) * mapcoord_ptx + sin(mapcoord_psi0) * mapcoord_pty 
+              - cos(mapcoord_psi0) * mapcoord_px0 - sin(mapcoord_psi0) * mapcoord_py0;
+            double carcoord_y = -sin(mapcoord_psi0) * mapcoord_ptx + cos(mapcoord_psi0) * mapcoord_pty 
+              + sin(mapcoord_psi0) * mapcoord_px0 - sin(mapcoord_psi0) * mapcoord_py0;
+            carcoord_ptsx(i) = carcoord_x;
+            carcoord_ptsy(i) = carcoord_y;
+          }
+          Eigen::VectorXd coeffs = polyfit(carcoord_ptsx, carcoord_ptsy, order);
+          double carcoord_px0 = 0.0;
+          double carcoord_py0 = 0.0; 
+          double carcoord_psi0 = 0.0;
+          double carcoord_v0 = mapcoord_v0;
+          double carcoord_cte0  = polyeval(coeffs, carcoord_px0) - carcoord_py0;
+          double carcoord_epsi0 = atan(coeffs[1]) - carcoord_psi0;
+          // now px0, py0, psi0, v0, cte0, epsi0 are the initial state and at car coordinate 
+          
           if (verbose)
           {
-          	cout << " the initial read in state: "<< endl;
-          	cout << " px0=" << px0 << ", py0=" << py0 
-          		 << ", psi0=" << psi0 << ", v0=" << v0 
-          		 << ", cte0=" << cte0 << ", epsi0=" << epsi0 << endl;
+            cout << "the initial states at car coordinate are: " << endl;
+            cout << "    px0 =" << carcoord_px0 << ", py0=" << carcoord_py0 << ", psi0=" << carcoord_psi0 
+            << ", v0=" << carcoord_v0 << ", cte0=" << carcoord_cte0 << ", epsi0=" << carcoord_epsi0 << endl;
           }
-          Eigen::VectorXd state(6);
-          state << px0, py0, psi0, v0, cte0,epsi0;
-          auto result = mpc.Solve(state, coeffs);
-		  if (verbose)
+
+          Eigen::VectorXd state0(6);
+          state0 << carcoord_px0, carcoord_py0, carcoord_psi0, carcoord_v0, carcoord_cte0, carcoord_epsi0;
+          auto result = mpc.Solve(state0, coeffs);
+		      if (verbose)
             cout << "Solve result size = " << result.size() << endl;
           /*
           * TODO: Calculate steering angle and throttle using MPC.
@@ -173,7 +171,7 @@ int main() {
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
           // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
-          msgJson["steering_angle"] = steer_value;
+          msgJson["steering_angle"] = steer_value / deg2rad(25);
           msgJson["throttle"] = throttle_value;
 
 
@@ -182,10 +180,16 @@ int main() {
           vector<double> mpc_y_vals;
           for (size_t i = 0; i < 10; i ++)
           {
-          	mpc_x_vals.push_back(result[2+ i *2]);
-          	mpc_y_vals.push_back(result[2+ i *2 +1]);
+            double carcoord_ptx1 = result[ 2 + i * 2];
+            double carcoord_pty1 = result[ 2 + i * 2 + 1];
+            // note that ptx1 and pty1 are in car coordinate
+            // switch back to map coordinate
+            double mapcoord_ptx2 = mapcoord_px0 + carcoord_ptx1 * cos(mapcoord_psi0) - carcoord_pty1 * sin(mapcoord_psi0);
+            double mapcoord_pty2 = mapcoord_py0 + carcoord_ptx1 * sin(mapcoord_psi0) + carcoord_pty1 * cos(mapcoord_psi0);
+          	mpc_x_vals.push_back(mapcoord_ptx2);
+          	mpc_y_vals.push_back(mapcoord_pty2);
           }
-                    if (verbose)
+          if (verbose)
           {
           	cout << " the size for mpc_x_vals = " << mpc_x_vals.size() << endl;
           	for (size_t i = 0; i < mpc_x_vals.size(); i ++)

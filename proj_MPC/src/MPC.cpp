@@ -95,7 +95,7 @@ class FG_eval {
       // the y0 refrence and psi0 reference
       // AD<double> f0 = polyeval(coeffs, x0);
       AD<double> f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * CppAD::pow(x0, 2) + coeffs[3] * CppAD::pow(x0, 3);
-      AD<double> psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * x0 * x0 ]);
+      AD<double> psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * x0 * x0 );
 
       fg[x_start + i + 1]    = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
       fg[y_start + i + 1]    = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
