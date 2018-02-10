@@ -1,4 +1,75 @@
 # CarND-Controls-MPC
+
+## description 
+
+this project is for the kinematic model control project for car ND term2.
+
+this is the server part code, e.g., the server will receive message from the simulator, which include:
+
+1. the current state of the car, the x position, y position, speed, psi angle.
+2. the reference path points list
+
+we need to use the model to calculate the actuation for the next step and predict the MPC predicted path.
+
+
+## the model
+
+1. model input requires the reference path and initial state
+
+even through the server receive the reference path by points, we will fit it into 3 order polynominal to the model.
+
+another thing is that all the position for path ref points and initial state are in map coordinate,
+
+it's transfered into car coordinate into MPC model, which will be much more convenient for MPC equation.
+
+2. the initial state
+
+x position, y position, velocity, psi (the towards angle), cross_track_error (cte, the difference at y axis for car position and ref path), and epsi (error of psi, the difference between car towards angle and the reference angle).
+
+so state size will be 6 for the car.
+
+3. timesteps
+
+we choose N = 10 and dt = 0.1s, e.g., we will provide control for the future 1 s behavior.
+
+I tested other parameters and seems less N will induce less accuracy result and much larger N will cost more times.
+
+4. constrains (MPC control)
+
+in the car coordinate, we will have state udpate for each time step, equation as:
+
+x1 = x0 + v0 * dt * cos(psi0)
+
+y1 = y0 + v0 * dt * sin(psi0)
+
+v1 = v0 + a0 * dt
+
+psi1 = psi0 + v0 /Lf * delta0 * dt
+
+cte1 = cte0 +  v0 * sin(epsi0) * dt, while cte0 = y0_ref0 - y0
+
+epsi1 = epsi0 + v0 /Lf * delta0 * dt, while epsi0 = psi0 - psi0_ref
+
+5. calculation
+
+Ipopt is used to calculate the result, it has totally 6 * N + 2 * (N-1) variables
+
+e.g., 6 states for N time time points, and 2 actuations (a and delta) at N -1 time step.
+
+also we have 6 * N constrains, e.g., (N-1) * 6 state update constrains, and 6 initial state constrains
+
+also the lower bound and upper bound required.
+
+6. Latency
+
+the control provided from MPC model will not imediate take affect on the simulator, it will have some delay.
+
+in my model, I will use the earlier control for the current state update.
+
+e.g., for the t0 to t1 state update, I will not use the control at t0, but t0-1 control.
+
+
+# CarND-Controls-MPC
 Self-Driving Car Engineer Nanodegree Program
 
 ---

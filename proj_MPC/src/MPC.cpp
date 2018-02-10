@@ -84,6 +84,11 @@ class FG_eval {
 
       AD<double> delta0 = vars[delta_start + i];
       AD<double> a0     = vars[a_start + i];
+      if (i > 0)
+      {
+        delta0 = vars[delta_start + i -1];
+        a0 = vars[a_start + i - 1];
+      }
 
       AD<double> x1    = vars[x_start + i + 1];
       AD<double> y1    = vars[y_start + i + 1];
