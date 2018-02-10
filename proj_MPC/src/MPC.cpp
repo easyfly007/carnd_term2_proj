@@ -6,7 +6,7 @@
 using CppAD::AD;
 
 // TODO: Set the timestep length and duration
-size_t N = 25;
+size_t N = 10;
 double dt = 0.05;
 
 const bool verbose = true;
@@ -45,12 +45,12 @@ class FG_eval {
     size_t a_start     = 0 + N * 7 - 1;
 
     fg[0] = 0;
-    AD<double> ref_v = 20.0;
+    AD<double> ref_v = 40.0;
     for (size_t i = 0; i < N; i ++)
     {
-      fg[0] += 100 * CppAD::pow(vars[cte_start + i], 2);
-      fg[0] += 100 * CppAD::pow(vars[epsi_start + i], 2);
-      fg[0] += CppAD::pow(vars[v_start + i] - ref_v, 2);
+      fg[0] += 1000 * CppAD::pow(vars[cte_start + i], 2);
+      fg[0] += 1000 * CppAD::pow(vars[epsi_start + i], 2);
+      fg[0] += 100 * CppAD::pow(vars[v_start + i] - ref_v, 2);
     }
 
     // minimize the use of the actuator, and make the controller more smooth
@@ -102,9 +102,9 @@ class FG_eval {
       // fg[psi_start + i + 1]  = psi1 - (psi0 + delta0 * dt);
       fg[psi_start + i + 1]  = psi1 - (psi0 - delta0 * dt);
       fg[v_start + i + 1]    = v1 - (v0 + a0 * dt);// ??
-      // fg[cte_start + i + 1]  = cte1 - (f0 - y0 + CppAD::sin(psi0) * dt);
-      fg[cte_start + i + 1]  = cte1 - (y0 - f0 + CppAD::sin(psi0) * dt);
-      fg[epsi_start + i + 1] = epsi1 - (psi0 - psides0 + v0 * delta0 * dt / Lf);
+      fg[cte_start + i + 1]  = cte1 - (f0 - y0 + CppAD::sin(psi0) * dt);
+      // fg[cte_start + i + 1]  = cte1 - (y0 - f0 + CppAD::sin(psi0) * dt);
+      fg[epsi_start + i + 1] = epsi1 - (psi0 - psides0 - v0 * delta0 * dt / Lf);
     }
   }
 };
@@ -116,6 +116,9 @@ MPC::MPC() {}
 MPC::~MPC() {}
 
 vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
+  if (verbose)
+    cout << "MPC::SOlve() begin" << endl;
+
   assert(state.size() == 6);
   double x0    = state[0];
   double y0    = state[1];
@@ -246,16 +249,26 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   //
   // {...} is shorthand for creating a vector, so auto x1 = {1.0,2.0}
   // creates a 2 element double vector.
-  if (verbose)
-  	cout << "MPC Solve, the solution.x size = " << solution.x.size() << endl;
-  vector<double> result;
 
+  vector<double> result;
+  if (verbose)
+  {
+    cout << "solution delta = " << solution.x[delta_start] << ", solution a = " << solution.x[a_start] << endl;
+  }
   result.push_back(solution.x[delta_start]);
   result.push_back(solution.x[a_start]);
   for (size_t i = 0; i < 10; i ++)
   {
+    if (i == 0)
+      cout << " the mpc future points at car coordinate are: " << endl;
+    cout << "(" << solution.x[x_start + i] << ", " << solution.x[y_start + i] << ")";
   	result.push_back(solution.x[x_start + i]);
   	result.push_back(solution.x[y_start + i]);
+  }
+  if (verbose)
+  {
+    cout << endl;
+    cout << "MPC::Solve() endl " << endl;
   }
   return result;
 

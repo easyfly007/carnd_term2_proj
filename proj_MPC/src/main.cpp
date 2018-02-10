@@ -101,8 +101,9 @@ int main() {
         string event = j[0].get<string>();
         if (event == "telemetry") {
           // j[1] is the data JSON object
-          vector<double> ptsx = j[1]["ptsx"];
-          vector<double> ptsy = j[1]["ptsy"];
+          vector<double> mapcoord_ptsx = j[1]["ptsx"];
+          vector<double> mapcoord_ptsy = j[1]["ptsy"];
+          assert(mapcoord_ptsx.size() == mapcoord_ptsy.size());
 
           // the initial value, e.g., the current state of the car
           double mapcoord_px0  = j[1]["x"];
@@ -113,18 +114,18 @@ int main() {
 
           // note that ptsx and ptsy are from map coordinate, 
           // we need to transfer it into car coordinate for future MPC implementation
-          Eigen::VectorXd carcoord_ptsx(ptsx.size());
-          Eigen::VectorXd carcoord_ptsy(ptsy.size());
-          for (size_t i = 0; i < ptsx.size(); i ++)
+          Eigen::VectorXd carcoord_ptsx(mapcoord_ptsx.size());
+          Eigen::VectorXd carcoord_ptsy(mapcoord_ptsy.size());
+          for (size_t i = 0; i < mapcoord_ptsx.size(); i ++)
           {
-            double mapcoord_ptx = ptsx[i];
-            double mapcoord_pty = ptsy[i];
-            double carcoord_x = cos(mapcoord_psi0) * mapcoord_ptx + sin(mapcoord_psi0) * mapcoord_pty 
+            double mapcoord_ptx = mapcoord_ptsx[i];
+            double mapcoord_pty = mapcoord_ptsy[i];
+            double carcoord_ptx = cos(mapcoord_psi0) * mapcoord_ptx + sin(mapcoord_psi0) * mapcoord_pty 
               - cos(mapcoord_psi0) * mapcoord_px0 - sin(mapcoord_psi0) * mapcoord_py0;
-            double carcoord_y = -sin(mapcoord_psi0) * mapcoord_ptx + cos(mapcoord_psi0) * mapcoord_pty 
-              + sin(mapcoord_psi0) * mapcoord_px0 - sin(mapcoord_psi0) * mapcoord_py0;
-            carcoord_ptsx(i) = carcoord_x;
-            carcoord_ptsy(i) = carcoord_y;
+            double carcoord_pty = -sin(mapcoord_psi0) * mapcoord_ptx + cos(mapcoord_psi0) * mapcoord_pty 
+              + sin(mapcoord_psi0) * mapcoord_px0 - cos(mapcoord_psi0) * mapcoord_py0;
+            carcoord_ptsx(i) = carcoord_ptx;
+            carcoord_ptsy(i) = carcoord_pty;
           }
           Eigen::VectorXd coeffs = polyfit(carcoord_ptsx, carcoord_ptsy, order);
           double carcoord_px0 = 0.0;
@@ -132,14 +133,31 @@ int main() {
           double carcoord_psi0 = 0.0;
           double carcoord_v0 = mapcoord_v0;
           double carcoord_cte0  = polyeval(coeffs, carcoord_px0) - carcoord_py0;
-          double carcoord_epsi0 = atan(coeffs[1]) - carcoord_psi0;
+          double carcoord_epsi0 = carcoord_psi0- atan(coeffs[1]) ;
           // now px0, py0, psi0, v0, cte0, epsi0 are the initial state and at car coordinate 
-          
+          if (verbose)
+          {
+            cout << "the initial states at map coordinate are: " << endl;
+            cout << "    px0=" << mapcoord_px0 << ", py0=" << mapcoord_py0 << ", psi0=" << mapcoord_psi0
+              << ", v0 = " << mapcoord_v0 << ", psi0=" << mapcoord_psi0 << endl;
+          }
           if (verbose)
           {
             cout << "the initial states at car coordinate are: " << endl;
             cout << "    px0 =" << carcoord_px0 << ", py0=" << carcoord_py0 << ", psi0=" << carcoord_psi0 
             << ", v0=" << carcoord_v0 << ", cte0=" << carcoord_cte0 << ", epsi0=" << carcoord_epsi0 << endl;
+          }
+
+          if (verbose)
+          {
+            cout << "the reference ptsx and ptsy in map coordinate:" << endl;
+            for (size_t i = 0; i < mapcoord_ptsx.size(); i ++)
+              cout << "    (" << mapcoord_ptsx[i] << ", " << mapcoord_ptsy[i] << ")";
+            cout << endl;
+            cout << "the reference ptsx and ptsy in car coordinate:" << endl;
+            for (int i = 0; i < carcoord_ptsx.size(); i ++)
+              cout << "    (" << carcoord_ptsx(i) << ", " << carcoord_ptsy(i) << ")";
+            cout << endl;
           }
 
           Eigen::VectorXd state0(6);
@@ -191,11 +209,11 @@ int main() {
           }
           if (verbose)
           {
-          	cout << " the size for mpc_x_vals = " << mpc_x_vals.size() << endl;
+          	cout << "the mpc x val at mapcoord are: "  << endl;
           	for (size_t i = 0; i < mpc_x_vals.size(); i ++)
           	    cout << "  " << mpc_x_vals[i];
           	cout << endl;
-          	cout << " the size for mpc_y_vals = " << mpc_y_vals.size() << endl;
+          	cout << "the mpc y val at mapcoord are: "<< endl;
           	for (size_t i = 0; i < mpc_y_vals.size(); i ++ )
           		cout << "  " << mpc_y_vals[i];
           	cout << endl;
@@ -208,8 +226,8 @@ int main() {
           msgJson["mpc_y"] = mpc_y_vals;
 
           //Display the waypoints/reference line
-          vector<double> next_x_vals = ptsx;
-          vector<double> next_y_vals = ptsy;
+          vector<double> next_x_vals = mapcoord_ptsx;
+          vector<double> next_y_vals = mapcoord_ptsy;
           if (verbose)
           {
           	cout << "the size for next_x_vals = " << next_x_vals.size() << endl;
