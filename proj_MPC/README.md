@@ -64,9 +64,10 @@ also the lower bound and upper bound required.
 
 the control provided from MPC model will not imediate take affect on the simulator, it will have some delay.
 
-in my model, I will use the earlier control for the current state update.
+in my model, we manually set a latency time as 100ms.
 
-e.g., for the t0 to t1 state update, I will not use the control at t0, but t0-1 control.
+so the model is actually desined to predict the control after the latency, and in the 100ms latency time, keep the car moving using the received states.
+
 
 
 # CarND-Controls-MPC
