@@ -23,7 +23,7 @@ int order = 3;
 // presented in the classroom matched the previous radius.
 //
 // This is the length from front to CoG that has a similar radius.
-const double Lf = 2.67;
+double Lf = 2.67;
 // extern double polyeval(Eigen::VectorXd coeffs, double x); 
 
 // Evaluate a polynomial.
@@ -56,23 +56,28 @@ class FG_eval {
     size_t a_start     = 0 + N * 7 - 1;
 
     fg[0] = 0;
-    AD<double> ref_v = 40.0;
+    AD<double> ref_v    = 40.0;
+    AD<double> ref_cte  = 0.0;
+    AD<double> ref_epsi = 0.0;
+    AD<double> ref_delta = 0.0;
+    AD<double> ref_a = 0.0;
+    // here I set ref_a to 1.0 for speed up
     for (size_t i = 0; i < N; i ++)
     {
-      fg[0] += 100 * CppAD::pow(vars[cte_start + i], 2);
-      fg[0] += 100 * CppAD::pow(vars[epsi_start + i], 2);
-      fg[0] += 50 * CppAD::pow(vars[v_start + i] - ref_v, 2);
+      fg[0] += 1000 * CppAD::pow(vars[cte_start + i] - ref_cte, 2);
+      fg[0] += 1000 * CppAD::pow(vars[epsi_start + i] - ref_epsi, 2);
+      fg[0] +=  500 * CppAD::pow(vars[v_start + i] - ref_v, 2);
     }
 
     // minimize the use of the actuator, and make the controller more smooth
     for (size_t i = 0; i < N - 1; i ++)
     {
-      fg[0] += 50* CppAD::pow(vars[delta_start + i], 2);
-      fg[0] += 50* CppAD::pow(vars[a_start + i], 2);
+      fg[0] += 50* CppAD::pow(vars[delta_start + i] - ref_delta, 2);
+      fg[0] += CppAD::pow(vars[a_start + i] - ref_a, 2);
     }
     for (size_t i = 0; i < N - 2; i ++)
     {
-      fg[0] += CppAD::pow(vars[delta_start + i + 1] - vars[delta_start + i], 2);
+      fg[0] += 5000 * CppAD::pow(vars[delta_start + i + 1] - vars[delta_start + i], 2);
       fg[0] += CppAD::pow(vars[a_start + i + 1] - vars[a_start + i], 2);
     }
     // initializations, for the start time point state
@@ -194,10 +199,10 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
 
   Dvector vars_lowerbound(n_vars);
   Dvector vars_upperbound(n_vars);
-  for (size_t i = 0; i < n_vars; i ++)
+  for (size_t i = 0; i < delta_start; i ++)
   {
-  	vars_lowerbound[i] = -1.0e20;
-  	vars_upperbound[i] = +1.0e20;
+  	vars_lowerbound[i] = -1.0e19;
+  	vars_upperbound[i] =  1.0e19;
   }
   for (size_t i = delta_start; i < a_start; i++) {
     vars_lowerbound[i] = -0.436332;

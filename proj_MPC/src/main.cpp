@@ -25,6 +25,7 @@ extern size_t N;
 extern double dt;
 extern bool verbose;
 extern int order;
+extern double Lf;
 
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
@@ -71,8 +72,8 @@ int main() {
           double mapcoord_py0  = j[1]["y"];
           double mapcoord_psi0 = j[1]["psi"];
           double mapcoord_v0   = j[1]["speed"];
-          double mapcoord_delta= j[1]['steering_angle'];
-          double mapcoord_a    = j[1]['throttle'];
+          double mapcoord_delta0 = j[1]["steering_angle"];
+          double mapcoord_a0    = j[1]["throttle"];
 
 
           // note that ptsx and ptsy are from map coordinate, 
@@ -101,6 +102,8 @@ int main() {
 
           // coeffs[1] is the derive of the reference path at position x = 0
           double carcoord_epsi0 = carcoord_psi0 - atan(coeffs[1]) ;
+          double carcoord_delta0 = mapcoord_delta0;
+          double carcoord_a0 = mapcoord_a0;
           // now px0, py0, psi0, v0, cte0, epsi0 are the initial state and at car coordinate 
           if (verbose)
           {
@@ -122,8 +125,19 @@ int main() {
             cout << endl;
           }
 
+          // now consider latency, when we provide control for the simulator,
+          // there's always 0.1s delay 
+          // so we will will try to fit the time after the latency time
+          double latency_time = 0.1;
+          double latency_px0 = carcoord_px0 + carcoord_v0 * cos(carcoord_psi0) * latency_time;
+          double latency_py0 = carcoord_py0 + carcoord_v0 * sin(carcoord_psi0) * latency_time;
+          double latency_psi0 = carcoord_psi0 - carcoord_delta0 * carcoord_v0 * latency_time / Lf;
+          double latency_v0   = carcoord_v0 + carcoord_a0 * latency_time;
+          double latency_cte0 = carcoord_cte0 + carcoord_v0 * sin(carcoord_epsi0) * latency_time;
+          double latency_epsio= carcoord_epsi0 + carcoord_v0 * carcoord_delta0*  latency_time / Lf; 
+
           Eigen::VectorXd state0(6);
-          state0 << carcoord_px0, carcoord_py0, carcoord_psi0, carcoord_v0, carcoord_cte0, carcoord_epsi0;
+          state0 << latency_px0, latency_py0, latency_psi0, latency_v0, latency_cte0, latency_epsio;
           auto result = mpc.Solve(state0, coeffs);
 		      if (verbose)
             cout << "Solve result size = " << result.size() << endl;
@@ -135,7 +149,7 @@ int main() {
           */
           // x, y, psi, v, cte, epsi, delta, a
           // 0  1  2    3  4    5     6      7
-          double steer_value = result[0];
+          double steer_value = result[0] / deg2rad(25);
           // as in the simulator, turn left means negative steering value, turn right means positive steering value
           // in the car coordinate, turn left means positive value, turn right means negative value,
           // 
@@ -143,10 +157,14 @@ int main() {
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
           // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
-          msgJson["steering_angle"] = steer_value / deg2rad(25);
+          msgJson["steering_angle"] = steer_value;
           msgJson["throttle"] = throttle_value;
 
-
+          if (verbose)
+          {
+            cout << "  **  steering angle = " << steer_value << endl;
+            cout << "  **  throttle value = " << throttle_value << endl;
+          }
           //Display the MPC predicted trajectory 
           vector<double> mpc_x_vals;
           vector<double> mpc_y_vals;
@@ -168,11 +186,11 @@ int main() {
           if (verbose)
           {
           	cout << "the mpc x val at mapcoord are: "  << endl;
-          	for (size_t i = 0; i < mpc_x_vals.size(); i ++)
+          	for (size_t i = 0; i < mpc_x_vals.size() && i < 10; i ++)
           	    cout << "  " << mpc_x_vals[i];
           	cout << endl;
           	cout << "the mpc y val at mapcoord are: "<< endl;
-          	for (size_t i = 0; i < mpc_y_vals.size(); i ++ )
+          	for (size_t i = 0; i < mpc_y_vals.size() && i < 10; i ++ )
           		cout << "  " << mpc_y_vals[i];
           	cout << endl;
           }
@@ -196,11 +214,11 @@ int main() {
           if (verbose)
           {
           	cout << "the size for next_x_vals = " << next_x_vals.size() << endl;
-          	for (size_t i = 0; i < next_x_vals.size(); i ++ )
+          	for (size_t i = 0; i < next_x_vals.size() && i < 10; i ++ )
           	    cout << " " << next_x_vals[i];
           	cout << endl;
           	cout << "the size for next_y_vals = " << next_y_vals.size() << endl;
-          	for (size_t i =0; i < next_y_vals.size(); i ++)
+          	for (size_t i =0; i < next_y_vals.size() && i < 10; i ++)
 	          	cout << " " << next_y_vals[i];
 	        cout << endl;
           }
@@ -213,7 +231,8 @@ int main() {
 
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-          std::cout << msg << std::endl;
+          // std::cout << msg << std::endl;
+          
           // Latency
           // The purpose is to mimic real driving conditions where
           // the car does actuate the commands instantly.
