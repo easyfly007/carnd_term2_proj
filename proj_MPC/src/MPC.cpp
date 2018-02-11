@@ -23,6 +23,14 @@ const bool verbose = true;
 const double Lf = 2.67;
 // extern double polyeval(Eigen::VectorXd coeffs, double x); 
 
+// Evaluate a polynomial.
+extern double polyeval(Eigen::VectorXd coeffs, double x);
+
+// Fit a polynomial.
+// Adapted from
+// https://github.com/JuliaMath/Polynomials.jl/blob/master/src/Polynomials.jl#L676-L716
+extern Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals,int order);
+
 class FG_eval {
  public:
   // Fitted polynomial coefficients
@@ -84,11 +92,6 @@ class FG_eval {
 
       AD<double> delta0 = vars[delta_start + i];
       AD<double> a0     = vars[a_start + i];
-      if (i > 0)
-      {
-        delta0 = vars[delta_start + i -1];
-        a0 = vars[a_start + i - 1];
-      }
 
       AD<double> x1    = vars[x_start + i + 1];
       AD<double> y1    = vars[y_start + i + 1];

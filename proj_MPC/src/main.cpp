@@ -48,6 +48,8 @@ string hasData(string s) {
 }
 
 // Evaluate a polynomial.
+extern double polyeval(Eigen::VectorXd coeffs, double x);
+/*
 double polyeval(Eigen::VectorXd coeffs, double x) {
   double result = 0.0;
   for (int i = 0; i < coeffs.size(); i++) {
@@ -55,10 +57,12 @@ double polyeval(Eigen::VectorXd coeffs, double x) {
   }
   return result;
 }
-
+*/
 // Fit a polynomial.
 // Adapted from
 // https://github.com/JuliaMath/Polynomials.jl/blob/master/src/Polynomials.jl#L676-L716
+extern Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals,int order);
+/*
 Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals,
                         int order) {
   assert(xvals.size() == yvals.size());
@@ -79,7 +83,7 @@ Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals,
   auto result = Q.solve(yvals);
   return result;
 }
-
+*/
 int main() {
   uWS::Hub h;
 
