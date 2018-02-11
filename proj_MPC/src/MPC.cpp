@@ -10,8 +10,9 @@ using CppAD::AD;
 // TODO: Set the timestep length and duration
 size_t N = 10;
 double dt = 0.05;
+bool verbose = true;
+int order = 3;
 
-const bool verbose = true;
 // This value assumes the model presented in the classroom is used.
 //
 // It was obtained by measuring the radius formed by running the vehicle in the
@@ -45,8 +46,8 @@ class FG_eval {
     // `fg` a vector of the cost constraints, `vars` is a vector of variable values (state & actuators)
     // NOTE: You'll probably go back and forth between this function and
     // the Solver function below.
-    size_t x_start     = 0;
-    size_t y_start     = 0 + N;
+    size_t x_start     = 0 + N * 0;
+    size_t y_start     = 0 + N * 1;
     size_t psi_start   = 0 + N * 2;
     size_t v_start     = 0 + N * 3;
     size_t cte_start   = 0 + N * 4;
@@ -58,8 +59,8 @@ class FG_eval {
     AD<double> ref_v = 40.0;
     for (size_t i = 0; i < N; i ++)
     {
-      fg[0] += 1000 * CppAD::pow(vars[cte_start + i], 2);
-      fg[0] += 1000 * CppAD::pow(vars[epsi_start + i], 2);
+      fg[0] += 100 * CppAD::pow(vars[cte_start + i], 2);
+      fg[0] += 100 * CppAD::pow(vars[epsi_start + i], 2);
       fg[0] += 100 * CppAD::pow(vars[v_start + i] - ref_v, 2);
     }
 
@@ -87,8 +88,8 @@ class FG_eval {
     {
       AD<double> x0    = vars[x_start + i];
       AD<double> y0    = vars[y_start + i];
-      AD<double> v0    = vars[v_start + i];
       AD<double> psi0  = vars[psi_start + i];
+      AD<double> v0    = vars[v_start + i];
       AD<double> cte0  = vars[cte_start + i];
       AD<double> epsi0 = vars[epsi_start + i];
 
@@ -104,17 +105,32 @@ class FG_eval {
 
       // the y0 refrence and psi0 reference
       // AD<double> f0 = polyeval(coeffs, x0);
-      AD<double> f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * CppAD::pow(x0, 2) + coeffs[3] * CppAD::pow(x0, 3);
-      AD<double> psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * x0 * x0 );
+      AD<double> f0;
+      if (order == 1)
+        f0 = coeffs[0] + coeffs[1] * x0;
+      else if (order == 2)
+        f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * CppAD::pow(x0, 2);
+      else if (order == 3)
+        f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * CppAD::pow(x0, 2) + coeffs[3] * CppAD::pow(x0, 3);
+        
+      AD<double> psides0;
+
+      if (order == 1)
+        psides0 = CppAD::atan(coeffs[1]);
+      else if (order == 2)
+        psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0 );
+      else if (order == 3)
+        psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * x0 * x0 );
 
       fg[x_start + i + 1]    = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
       fg[y_start + i + 1]    = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
-      // fg[psi_start + i + 1]  = psi1 - (psi0 + delta0 * dt);
-      fg[psi_start + i + 1]  = psi1 - (psi0 + delta0 * dt * v0 / Lf);
+      fg[psi_start + i + 1]  = psi1 - (psi0 - delta0 * dt * v0 / Lf);
+      // remember that in the simulation, the delta will be just opposite with the car orientation, 
+      // always use -delta instead of delta
       fg[v_start + i + 1]    = v1 - (v0 + a0 * dt);
-      // fg[cte_start + i + 1]  = cte1 - (f0 - y0 + CppAD::sin(psi0) * dt);
-      fg[cte_start + i + 1]  = cte1 - (y0 - f0 + v0 * CppAD::sin(epsi0) * dt);
-      fg[epsi_start + i + 1] = epsi1 - (psi0 - psides0 + v0 * delta0 * dt / Lf);
+      fg[cte_start + i + 1]  = cte1 - (f0 - y0  + v0 * CppAD::sin(epsi0) * dt);
+      fg[epsi_start + i + 1] = epsi1 - (psi0 - psides0 - v0 * delta0 * dt / Lf);
+      // use - delta to replace delta in all equations
     }
   }
 };
@@ -155,13 +171,13 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   // delta lower and upepr limit
 
   size_t x_start     = 0;
-  size_t y_start     = 0 + N;
-  size_t psi_start   = 0 + N * 2;
-  size_t v_start     = 0 + N * 3;
-  size_t cte_start   = 0 + N * 4;
-  size_t epsi_start  = 0 + N * 5;
-  size_t delta_start = 0 + N * 6;
-  size_t a_start     = 0 + N * 7 - 1;
+  size_t y_start     = x_start + N;
+  size_t psi_start   = y_start + N;
+  size_t v_start     = psi_start + N;
+  size_t cte_start   = v_start + N;
+  size_t epsi_start  = cte_start + N;
+  size_t delta_start = epsi_start + N;
+  size_t a_start     = delta_start + N -1;
 
   // Initial value of the independent variables.
   // SHOULD BE 0 besides initial state.

@@ -22,18 +22,10 @@ double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
 
 extern size_t N;
-size_t x_start     = 0;
-size_t y_start     = 0 + N;
-size_t psi_start   = 0 + N * 2;
-size_t v_start     = 0 + N * 3;
-size_t cte_start   = 0 + N * 4;
-size_t epsi_start  = 0 + N * 5;
-size_t delta_start = 0 + N * 6;
-size_t a_start     = 0 + N * 7 - 1;
+extern double dt;
+extern bool verbose;
+extern int order;
 
-
-const int order = 3.0;
-const bool verbose = true;
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
 // else the empty string "" will be returned.
@@ -49,45 +41,17 @@ string hasData(string s) {
   return "";
 }
 
-// Evaluate a polynomial.
-//extern double polyeval(Eigen::VectorXd coeffs, double x);
-/*
-double polyeval(Eigen::VectorXd coeffs, double x) {
-  double result = 0.0;
-  for (int i = 0; i < coeffs.size(); i++) {
-    result += coeffs[i] * pow(x, i);
-  }
-  return result;
-}
-*/
-// Fit a polynomial.
-// Adapted from
-// https://github.com/JuliaMath/Polynomials.jl/blob/master/src/Polynomials.jl#L676-L716
-//extern Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals,int order);
-/*
-Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals,
-                        int order) {
-  assert(xvals.size() == yvals.size());
-  assert(order >= 1 && order <= xvals.size() - 1);
-  Eigen::MatrixXd A(xvals.size(), order + 1);
-
-  for (int i = 0; i < xvals.size(); i++) {
-    A(i, 0) = 1.0;
-  }
-
-  for (int j = 0; j < xvals.size(); j++) {
-    for (int i = 0; i < order; i++) {
-      A(j, i + 1) = A(j, i) * xvals(j);
-    }
-  }
-
-  auto Q = A.householderQr();
-  auto result = Q.solve(yvals);
-  return result;
-}
-*/
 int main() {
   uWS::Hub h;
+
+  size_t x_start     = 0;
+  size_t y_start     = 0 + N;
+  size_t psi_start   = 0 + N * 2;
+  size_t v_start     = 0 + N * 3;
+  size_t cte_start   = 0 + N * 4;
+  size_t epsi_start  = 0 + N * 5;
+  size_t delta_start = 0 + N * 6;
+  size_t a_start     = 0 + N * 7 - 1;
 
   // MPC is initialized here!
   MPC mpc;
@@ -116,6 +80,8 @@ int main() {
           double mapcoord_py0  = j[1]["y"];
           double mapcoord_psi0 = j[1]["psi"];
           double mapcoord_v0   = j[1]["speed"];
+          // double mapcoord_delta= j[1]['steering_angle'];
+          // double mapcoord_a    = j[1]['throttle'];
 
 
           // note that ptsx and ptsy are from map coordinate, 
@@ -138,24 +104,23 @@ int main() {
           double carcoord_py0 = 0.0; 
           double carcoord_psi0 = 0.0;
           double carcoord_v0 = mapcoord_v0;
-          double carcoord_cte0  = carcoord_py0 - polyeval(coeffs, carcoord_px0); //  - carcoord_py0;
-          double carcoord_epsi0 = atan(coeffs[1]) ;
+          // double carcoord_cte0  = carcoord_py0 - polyeval(coeffs, carcoord_px0);
+          double carcoord_cte0  = polyeval(coeffs, carcoord_px0) - carcoord_py0;
+          // question: why it's y_ref - y_state? I think it should be y_state - y_ref for cte
+
+          // coeffs[1] is the derive of the reference path at position x = 0
+          double carcoord_epsi0 = carcoord_psi0 - atan(coeffs[1]) ;
           // now px0, py0, psi0, v0, cte0, epsi0 are the initial state and at car coordinate 
           if (verbose)
           {
             cout << "the initial states at map coordinate are: " << endl;
             cout << "    px0=" << mapcoord_px0 << ", py0=" << mapcoord_py0 << ", psi0=" << mapcoord_psi0
               << ", v0 = " << mapcoord_v0 << ", psi0=" << mapcoord_psi0 << endl;
-          }
-          if (verbose)
-          {
+
             cout << "the initial states at car coordinate are: " << endl;
             cout << "    px0 =" << carcoord_px0 << ", py0=" << carcoord_py0 << ", psi0=" << carcoord_psi0 
             << ", v0=" << carcoord_v0 << ", cte0=" << carcoord_cte0 << ", epsi0=" << carcoord_epsi0 << endl;
-          }
 
-          if (verbose)
-          {
             cout << "the reference ptsx and ptsy in map coordinate:" << endl;
             for (size_t i = 0; i < mapcoord_ptsx.size(); i ++)
               cout << "    (" << mapcoord_ptsx[i] << ", " << mapcoord_ptsy[i] << ")";
@@ -179,22 +144,11 @@ int main() {
           */
           // x, y, psi, v, cte, epsi, delta, a
           // 0  1  2    3  4    5     6      7
-          double steer_value = result[0] * (-1);
+          double steer_value = result[0];// * (-1);
           // as in the simulator, turn left means negative steering value, turn right means positive steering value
           // in the car coordinate, turn left means positive value, turn right means negative value,
           // 
           double throttle_value = result[1];
-          
-          if (throttle_value > 1.0)
-            throttle_value = 1.0;
-          else if (throttle_value < -1.0)
-            throttle_value = -1.0;
-
-          if (steer_value > 1.0)
-            steer_value = 1.0;
-          else if (steer_value < -1.0)
-            steer_value = -1.0;
-          
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
           // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
@@ -211,10 +165,14 @@ int main() {
             double carcoord_pty1 = result[ 2 + i * 2 + 1];
             // note that ptx1 and pty1 are in car coordinate
             // switch back to map coordinate
-            double mapcoord_ptx2 = mapcoord_px0 + carcoord_ptx1 * cos(mapcoord_psi0) - carcoord_pty1 * sin(mapcoord_psi0);
-            double mapcoord_pty2 = mapcoord_py0 + carcoord_ptx1 * sin(mapcoord_psi0) + carcoord_pty1 * cos(mapcoord_psi0);
-          	mpc_x_vals.push_back(mapcoord_ptx2);
-          	mpc_y_vals.push_back(mapcoord_pty2);
+            // double mapcoord_ptx2 = mapcoord_px0 + carcoord_ptx1 * cos(mapcoord_psi0) - carcoord_pty1 * sin(mapcoord_psi0);
+            // double mapcoord_pty2 = mapcoord_py0 + carcoord_ptx1 * sin(mapcoord_psi0) + carcoord_pty1 * cos(mapcoord_psi0);
+          	// mpc_x_vals.push_back(mapcoord_ptx2);
+          	// mpc_y_vals.push_back(mapcoord_pty2);
+
+            // as we need to put the car coordinate mpc points to the simulator
+            mpc_x_vals.push_back(carcoord_ptx1);
+            mpc_y_vals.push_back(carcoord_pty1);
           }
           if (verbose)
           {
@@ -235,8 +193,13 @@ int main() {
           msgJson["mpc_y"] = mpc_y_vals;
 
           //Display the waypoints/reference line
-          vector<double> next_x_vals = mapcoord_ptsx;
-          vector<double> next_y_vals = mapcoord_ptsy;
+          vector<double> next_x_vals;
+          vector<double> next_y_vals;
+          for (int i = 0; i < 10; i ++)
+          {
+            next_x_vals.push_back(1.0 * i);
+            next_y_vals.push_back(polyeval(coeffs, 1.0 * i));
+          }
           if (verbose)
           {
           	cout << "the size for next_x_vals = " << next_x_vals.size() << endl;
