@@ -9,6 +9,8 @@
 #include "MPC.h"
 #include "json.hpp"
 
+#include "util.h"
+
 // for convenience
 using json = nlohmann::json;
 using namespace std;
@@ -48,7 +50,7 @@ string hasData(string s) {
 }
 
 // Evaluate a polynomial.
-extern double polyeval(Eigen::VectorXd coeffs, double x);
+//extern double polyeval(Eigen::VectorXd coeffs, double x);
 /*
 double polyeval(Eigen::VectorXd coeffs, double x) {
   double result = 0.0;
@@ -61,7 +63,7 @@ double polyeval(Eigen::VectorXd coeffs, double x) {
 // Fit a polynomial.
 // Adapted from
 // https://github.com/JuliaMath/Polynomials.jl/blob/master/src/Polynomials.jl#L676-L716
-extern Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals,int order);
+//extern Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals,int order);
 /*
 Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals,
                         int order) {

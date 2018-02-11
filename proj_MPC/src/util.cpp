@@ -11,6 +11,13 @@ double polyeval(Eigen::VectorXd coeffs, double x) {
   return result;
 }
 
+double polyderive(Eigen::VectorXd coeffs, double x){
+  double derive = 0.0;
+  for (int i = 1; i < coeffs.size(); i ++)
+    derive += i* coeffs(i) * pow(x, i -1);
+  return derive;
+}
+
 // Fit a polynomial.
 // Adapted from
 // https://github.com/JuliaMath/Polynomials.jl/blob/master/src/Polynomials.jl#L676-L716
