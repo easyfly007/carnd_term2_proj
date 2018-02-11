@@ -9,7 +9,7 @@ using CppAD::AD;
 
 // TODO: Set the timestep length and duration
 size_t N = 10;
-double dt = 0.05;
+double dt = 0.1;
 bool verbose = true;
 int order = 3;
 
@@ -61,14 +61,14 @@ class FG_eval {
     {
       fg[0] += 100 * CppAD::pow(vars[cte_start + i], 2);
       fg[0] += 100 * CppAD::pow(vars[epsi_start + i], 2);
-      fg[0] += 100 * CppAD::pow(vars[v_start + i] - ref_v, 2);
+      fg[0] += 50 * CppAD::pow(vars[v_start + i] - ref_v, 2);
     }
 
     // minimize the use of the actuator, and make the controller more smooth
     for (size_t i = 0; i < N - 1; i ++)
     {
-      fg[0] += CppAD::pow(vars[delta_start + i], 2);
-      fg[0] += CppAD::pow(vars[a_start + i], 2);
+      fg[0] += 50* CppAD::pow(vars[delta_start + i], 2);
+      fg[0] += 50* CppAD::pow(vars[a_start + i], 2);
     }
     for (size_t i = 0; i < N - 2; i ++)
     {
@@ -120,7 +120,7 @@ class FG_eval {
       else if (order == 2)
         psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0 );
       else if (order == 3)
-        psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * x0 * x0 );
+        psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * CppAD::pow(x0, 2) );
 
       fg[x_start + i + 1]    = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
       fg[y_start + i + 1]    = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
@@ -161,7 +161,6 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   // element vector and there are 10 timesteps. The number of variables is:
   //
   // 4 * 10 + 2 * 9
-  assert(state.size() == 6);
   size_t n_vars = state.size() * N + 2 * (N - 1);
   
   // TODO: Set the number of constraints

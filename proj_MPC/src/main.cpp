@@ -44,15 +44,6 @@ string hasData(string s) {
 int main() {
   uWS::Hub h;
 
-  size_t x_start     = 0;
-  size_t y_start     = 0 + N;
-  size_t psi_start   = 0 + N * 2;
-  size_t v_start     = 0 + N * 3;
-  size_t cte_start   = 0 + N * 4;
-  size_t epsi_start  = 0 + N * 5;
-  size_t delta_start = 0 + N * 6;
-  size_t a_start     = 0 + N * 7 - 1;
-
   // MPC is initialized here!
   MPC mpc;
 
@@ -80,8 +71,8 @@ int main() {
           double mapcoord_py0  = j[1]["y"];
           double mapcoord_psi0 = j[1]["psi"];
           double mapcoord_v0   = j[1]["speed"];
-          // double mapcoord_delta= j[1]['steering_angle'];
-          // double mapcoord_a    = j[1]['throttle'];
+          double mapcoord_delta= j[1]['steering_angle'];
+          double mapcoord_a    = j[1]['throttle'];
 
 
           // note that ptsx and ptsy are from map coordinate, 
@@ -144,7 +135,7 @@ int main() {
           */
           // x, y, psi, v, cte, epsi, delta, a
           // 0  1  2    3  4    5     6      7
-          double steer_value = result[0];// * (-1);
+          double steer_value = result[0];
           // as in the simulator, turn left means negative steering value, turn right means positive steering value
           // in the car coordinate, turn left means positive value, turn right means negative value,
           // 
@@ -195,10 +186,12 @@ int main() {
           //Display the waypoints/reference line
           vector<double> next_x_vals;
           vector<double> next_y_vals;
-          for (int i = 0; i < 10; i ++)
+          for (int i = 0; i < 20; i ++)
           {
-            next_x_vals.push_back(1.0 * i);
-            next_y_vals.push_back(polyeval(coeffs, 1.0 * i));
+            double ptx1 = 2.0 * i;
+            double pty1 = polyeval(coeffs, ptx1);
+            next_x_vals.push_back(ptx1);
+            next_y_vals.push_back(pty1);
           }
           if (verbose)
           {
