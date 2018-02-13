@@ -59,6 +59,8 @@ int main() {
     if (sdata.size() > 2 && sdata[0] == '4' && sdata[1] == '2') {
       string s = hasData(sdata);
       if (s != "") {
+        auto time0 = std::chrono::system_clock::now();
+
         auto j = json::parse(s);
         string event = j[0].get<string>();
         if (event == "telemetry") {
@@ -72,15 +74,16 @@ int main() {
           double mapcoord_py0    = j[1]["y"];
           double mapcoord_psi0   = j[1]["psi"];
           double mapcoord_v0     = j[1]["speed"];
+          mapcoord_v0 = mapcoord_v0;
+          // what unit it is? km/h or m/s? I suppose it as m/s
           double mapcoord_delta0 = j[1]["steering_angle"];
           double mapcoord_a0     = j[1]["throttle"];
-
-          // as the speed received from the simulator, the unit is 
 
           // note that ptsx and ptsy are from map coordinate, 
           // we need to transfer it into car coordinate for future MPC implementation
           Eigen::VectorXd carcoord_ptsx(mapcoord_ptsx.size());
           Eigen::VectorXd carcoord_ptsy(mapcoord_ptsy.size());
+          // flag to indicate the x data value increase or decrease
           for (size_t i = 0; i < mapcoord_ptsx.size(); i ++)
           {
             double mapcoord_ptx = mapcoord_ptsx[i];
@@ -98,7 +101,8 @@ int main() {
             carcoord_ptsx(i) = carcoord_ptx;
             carcoord_ptsy(i) = carcoord_pty;
           }
-          Eigen::VectorXd coeffs = polyfit(carcoord_ptsx, carcoord_ptsy, order);
+
+          Eigen::VectorXd coeffs = polyfit(carcoord_ptsx,carcoord_ptsy, order);
           double carcoord_px0 = 0.0;
           double carcoord_py0 = 0.0; 
           double carcoord_psi0 = 0.0;
@@ -135,7 +139,11 @@ int main() {
           // now consider latency, when we provide control for the simulator,
           // there's always 0.1s delay 
           // so we will will try to fit the time after the latency time
-          double latency_time = 0.1;
+          double latency_time = 0.1 + 0.1; 
+          // 0.1 is for the manually added sleep latency, and another 0.1 is the calculation latency
+          // you may adjust it to another value on different machine, but on my pc ubuntu viertual box,
+          // 0.1 seems to be a reasonable value
+
           double latency_px0 = carcoord_px0 + carcoord_v0 * cos(carcoord_psi0) * latency_time;
           double latency_py0 = carcoord_py0 + carcoord_v0 * sin(carcoord_psi0) * latency_time;
           double latency_psi0 = carcoord_psi0 - carcoord_delta0 * carcoord_v0 * latency_time / Lf;
@@ -144,7 +152,7 @@ int main() {
           // double latency_epsio= carcoord_epsi0 + carcoord_v0 * carcoord_delta0*  latency_time / Lf; 
           double latency_epsio= carcoord_epsi0 - carcoord_v0 * carcoord_delta0*  latency_time / Lf; 
           // replace delta with - delta in the equation
-          
+
           Eigen::VectorXd state0(6);
           state0 << latency_px0, latency_py0, latency_psi0, latency_v0, latency_cte0, latency_epsio;
           auto result = mpc.Solve(state0, coeffs);
@@ -169,8 +177,9 @@ int main() {
           msgJson["steering_angle"] = steer_value;
           msgJson["throttle"] = throttle_value;
 
-          if (verbose)
+          // if (verbose)
           {
+            cout << endl;
             cout << "  **  steering angle = " << steer_value << endl;
             cout << "  **  throttle value = " << throttle_value << endl;
           }
@@ -213,9 +222,9 @@ int main() {
           //Display the waypoints/reference line
           vector<double> next_x_vals;
           vector<double> next_y_vals;
-          for (int i = 0; i < 20; i ++)
+          for (int i = 0; i < 10; i ++)
           {
-            double ptx1 = 2.0 * i;
+            double ptx1 = dt * mapcoord_v0 * i;
             double pty1 = polyeval(coeffs, ptx1);
             next_x_vals.push_back(ptx1);
             next_y_vals.push_back(pty1);
@@ -237,7 +246,9 @@ int main() {
 
           msgJson["next_x"] = next_x_vals;
           msgJson["next_y"] = next_y_vals;
-
+          auto time1 = std::chrono::system_clock::now();
+          std::chrono::duration<double> latency_calc = time1 - time0;
+          cout << endl << "latency in calculation = " << latency_calc.count() << endl;
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
           // std::cout << msg << std::endl;
