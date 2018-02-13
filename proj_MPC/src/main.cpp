@@ -68,13 +68,14 @@ int main() {
           assert(mapcoord_ptsx.size() == mapcoord_ptsy.size());
 
           // the initial value, e.g., the current state of the car
-          double mapcoord_px0  = j[1]["x"];
-          double mapcoord_py0  = j[1]["y"];
-          double mapcoord_psi0 = j[1]["psi"];
-          double mapcoord_v0   = j[1]["speed"];
+          double mapcoord_px0    = j[1]["x"];
+          double mapcoord_py0    = j[1]["y"];
+          double mapcoord_psi0   = j[1]["psi"];
+          double mapcoord_v0     = j[1]["speed"];
           double mapcoord_delta0 = j[1]["steering_angle"];
-          double mapcoord_a0    = j[1]["throttle"];
+          double mapcoord_a0     = j[1]["throttle"];
 
+          // as the speed received from the simulator, the unit is 
 
           // note that ptsx and ptsy are from map coordinate, 
           // we need to transfer it into car coordinate for future MPC implementation
@@ -84,10 +85,16 @@ int main() {
           {
             double mapcoord_ptx = mapcoord_ptsx[i];
             double mapcoord_pty = mapcoord_ptsy[i];
-            double carcoord_ptx = cos(mapcoord_psi0) * mapcoord_ptx + sin(mapcoord_psi0) * mapcoord_pty 
-              - cos(mapcoord_psi0) * mapcoord_px0 - sin(mapcoord_psi0) * mapcoord_py0;
-            double carcoord_pty = -sin(mapcoord_psi0) * mapcoord_ptx + cos(mapcoord_psi0) * mapcoord_pty 
-              + sin(mapcoord_psi0) * mapcoord_px0 - cos(mapcoord_psi0) * mapcoord_py0;
+
+            double dx = mapcoord_ptx - mapcoord_px0;
+            double dy = mapcoord_pty - mapcoord_py0;
+            double carcoord_ptx = dx * cos(mapcoord_psi0) + dy * sin(mapcoord_psi0);
+            double carcoord_pty = - dx * sin(mapcoord_psi0) + dy * cos(mapcoord_psi0);
+
+            // double carcoord_ptx = cos(mapcoord_psi0) * mapcoord_ptx + sin(mapcoord_psi0) * mapcoord_pty 
+            //   - cos(mapcoord_psi0) * mapcoord_px0 - sin(mapcoord_psi0) * mapcoord_py0;
+            // double carcoord_pty = -sin(mapcoord_psi0) * mapcoord_ptx + cos(mapcoord_psi0) * mapcoord_pty 
+            //   + sin(mapcoord_psi0) * mapcoord_px0 - cos(mapcoord_psi0) * mapcoord_py0;
             carcoord_ptsx(i) = carcoord_ptx;
             carcoord_ptsy(i) = carcoord_pty;
           }

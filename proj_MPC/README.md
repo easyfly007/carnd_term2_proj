@@ -50,6 +50,23 @@ cte1 = cte0 +  v0 * sin(epsi0) * dt, while cte0 = y0_ref0 - y0
 
 epsi1 = epsi0 + v0 /Lf * delta0 * dt, while epsi0 = psi0 - psi0_ref
 
+note: there's some difference between the simulator and the coordinate model, it's 
+
+* in the simulator, if the car drive direction is x-axis, then the y-axis will be at the right hand side.
+e.g., if you turn right, y increase. 
+while in the above equation, y-axis is at the left hand side of the x-axis direction.
+
+this difference will me to use 
+cte = y_ref - y, rather than cte = y - y_ref  
+
+* accordingg the y-axis difference, the steering angle in the simulator is quite different.
+when we turn left, the steering angle will be a negative value.
+so in the above value, we need to use (-delta) to replace all the delta related equation.
+
+
+after these consideration, all the final control/state we get will be consistent at the simulator.
+no additional transformation need.
+
 5. calculation
 
 Ipopt is used to calculate the result, it has totally 6 * N + 2 * (N-1) variables
