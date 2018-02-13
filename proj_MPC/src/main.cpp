@@ -141,8 +141,10 @@ int main() {
           double latency_psi0 = carcoord_psi0 - carcoord_delta0 * carcoord_v0 * latency_time / Lf;
           double latency_v0   = carcoord_v0 + carcoord_a0 * latency_time;
           double latency_cte0 = carcoord_cte0 + carcoord_v0 * sin(carcoord_epsi0) * latency_time;
-          double latency_epsio= carcoord_epsi0 + carcoord_v0 * carcoord_delta0*  latency_time / Lf; 
-
+          // double latency_epsio= carcoord_epsi0 + carcoord_v0 * carcoord_delta0*  latency_time / Lf; 
+          double latency_epsio= carcoord_epsi0 - carcoord_v0 * carcoord_delta0*  latency_time / Lf; 
+          // replace delta with - delta in the equation
+          
           Eigen::VectorXd state0(6);
           state0 << latency_px0, latency_py0, latency_psi0, latency_v0, latency_cte0, latency_epsio;
           auto result = mpc.Solve(state0, coeffs);

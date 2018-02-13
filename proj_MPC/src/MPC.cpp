@@ -127,14 +127,14 @@ class FG_eval {
       else if (order == 3)
         psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * CppAD::pow(x0, 2) );
 
-      fg[x_start + i + 1]    = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
-      fg[y_start + i + 1]    = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
-      fg[psi_start + i + 1]  = psi1 - (psi0 - delta0 * dt * v0 / Lf);
+      fg[x_start + i + 2]    = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
+      fg[y_start + i + 2]    = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
+      fg[psi_start + i + 2]  = psi1 - (psi0 - delta0 * dt * v0 / Lf);
       // remember that in the simulation, the delta will be just opposite with the car orientation, 
       // always use -delta instead of delta
-      fg[v_start + i + 1]    = v1 - (v0 + a0 * dt);
-      fg[cte_start + i + 1]  = cte1 - (f0 - y0  + v0 * CppAD::sin(epsi0) * dt);
-      fg[epsi_start + i + 1] = epsi1 - (psi0 - psides0 - v0 * delta0 * dt / Lf);
+      fg[v_start + i + 2]    = v1 - (v0 + a0 * dt);
+      fg[cte_start + i + 2]  = cte1 - (f0 - y0  + v0 * CppAD::sin(epsi0) * dt);
+      fg[epsi_start + i + 2] = epsi1 - (psi0 - psides0 - v0 * delta0 * dt / Lf);
       // use - delta to replace delta in all equations
     }
   }
